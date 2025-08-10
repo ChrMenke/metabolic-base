@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Metabolic Base - Intelligentes Lernzentrum</title>
     <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
     <meta name="theme-color" content="#667eea">
     <meta name="description" content="Intelligentes Lernzentrum für angeborene Stoffwechselerkrankungen mit automatischer Modulerkennung">
     
@@ -803,7 +804,7 @@
             </div>
             
             <div class="controls-grid">
-                <button id="manualBackupBtn" class="control-btn backup-btn" onclick="createManualBackup()">
+                <button id="manualBackupBtn" class="control-btn backup-btn">
                     <div class="btn-icon">💾</div>
                     <div class="btn-content">
                         <div class="btn-title">Backup erstellen</div>
@@ -811,7 +812,7 @@
                     </div>
                 </button>
                 
-                <button id="manualSyncBtn" class="control-btn sync-btn" onclick="performManualSync()">
+                <button id="manualSyncBtn" class="control-btn sync-btn">
                     <div class="btn-icon">🔄</div>
                     <div class="btn-content">
                         <div class="btn-title">Module synchronisieren</div>
@@ -885,7 +886,9 @@
             document.body.setAttribute('data-theme', savedTheme);
             
             const toggleBtn = document.querySelector('.theme-toggle');
-            toggleBtn.textContent = savedTheme === 'light' ? '🌙 Dark' : '☀️ Light';
+            if (toggleBtn) {
+                toggleBtn.textContent = savedTheme === 'light' ? '🌙 Dark' : '☀️ Light';
+            }
         }
 
         // ========================================================================================
@@ -956,7 +959,7 @@
 
             // Scan each category
             for (const [categoryKey, categoryInfo] of Object.entries(categories)) {
-                const categoryPath = `/metabolic-base/modules/${getCategoryFolder(categoryKey)}/`;
+                const categoryPath = `./modules/${getCategoryFolder(categoryKey)}/`;
                 
                 for (const pattern of patterns) {
                     const modulePath = categoryPath + pattern;
@@ -1157,6 +1160,25 @@
                 
                 const categoryCard = document.createElement('div');
                 categoryCard.className = 'category-card';
+                
+                let modulesHtml = '';
+                if (modules.length === 0) {
+                    modulesHtml = '<div class="empty-state"><div class="icon">📭</div><p>Noch keine Module in dieser Kategorie</p></div>';
+                } else {
+                    modulesHtml = modules.map(module => `
+                        <a href="${module.path}" class="module-item" data-module-id="${module.id}" target="_blank">
+                            <div class="module-info">
+                                <div class="module-title">${module.title}</div>
+                                <div class="module-subtitle">${module.subtitle || 'Lernmodul'}</div>
+                            </div>
+                            <div class="module-actions">
+                                <button class="action-btn notes-btn" onclick="event.preventDefault(); event.stopPropagation(); openNotes('${module.id}', '${module.title}')" title="Notizen">📝</button>
+                                <button class="action-btn progress-btn ${getProgressStatus(module.id) === 'completed' ? 'completed' : ''}" onclick="event.preventDefault(); event.stopPropagation(); toggleProgress('${module.id}')" title="Fortschritt">✓</button>
+                            </div>
+                        </a>
+                    `).join('');
+                }
+                
                 categoryCard.innerHTML = `
                     <div class="category-header">
                         <div class="category-icon">${categoryInfo.icon}</div>
@@ -1167,21 +1189,7 @@
                         <span class="category-count">${modules.length}</span>
                     </div>
                     <div class="modules-list">
-                        ${modules.length === 0 ? 
-                            '<div class="empty-state"><div class="icon">📭</div><p>Noch keine Module in dieser Kategorie</p></div>' :
-                            modules.map(module => `
-                                <a href="${module.path}" class="module-item" data-module-id="${module.id}" target="_blank">
-                                    <div class="module-info">
-                                        <div class="module-title">${module.title}</div>
-                                        <div class="module-subtitle">${module.subtitle || 'Lernmodul'}</div>
-                                    </div>
-                                    <div class="module-actions">
-                                        <button class="action-btn notes-btn" onclick="event.preventDefault(); openNotes('${module.id}', '${module.title}')" title="Notizen">📝</button>
-                                        <button class="action-btn progress-btn ${getProgressStatus(module.id) === 'completed' ? 'completed' : ''}" onclick="event.preventDefault(); toggleProgress('${module.id}')" title="Fortschritt">✓</button>
-                                    </div>
-                                </a>
-                            `).join('')
-                        }
+                        ${modulesHtml}
                     </div>
                 `;
                 
@@ -1196,7 +1204,7 @@
             let count = 0;
             for (let i = 0; i < localStorage.length; i++) {
                 const key = localStorage.key(i);
-                if (key.startsWith('progress_') && localStorage.getItem(key) === 'completed') {
+                if (key && key.startsWith('progress_') && localStorage.getItem(key) === 'completed') {
                     count++;
                 }
             }
@@ -1277,12 +1285,14 @@
                 // Collect user data
                 for (let i = 0; i < localStorage.length; i++) {
                     const key = localStorage.key(i);
-                    if (key.startsWith('notes_')) {
-                        const moduleId = key.replace('notes_', '');
-                        backupData.userData.notes[moduleId] = localStorage.getItem(key);
-                    } else if (key.startsWith('progress_')) {
-                        const moduleId = key.replace('progress_', '');
-                        backupData.userData.progress[moduleId] = localStorage.getItem(key);
+                    if (key) {
+                        if (key.startsWith('notes_')) {
+                            const moduleId = key.replace('notes_', '');
+                            backupData.userData.notes[moduleId] = localStorage.getItem(key);
+                        } else if (key.startsWith('progress_')) {
+                            const moduleId = key.replace('progress_', '');
+                            backupData.userData.progress[moduleId] = localStorage.getItem(key);
+                        }
                     }
                 }
 
@@ -1395,30 +1405,47 @@
         function setupEventListeners() {
             // Search functionality
             const searchInput = document.getElementById('searchInput');
-            searchInput.addEventListener('input', (e) => {
-                clearTimeout(searchTimeout);
-                searchTimeout = setTimeout(() => {
-                    performSearch(e.target.value);
-                }, 300); // Debounce search
-            });
+            if (searchInput) {
+                searchInput.addEventListener('input', (e) => {
+                    clearTimeout(searchTimeout);
+                    searchTimeout = setTimeout(() => {
+                        performSearch(e.target.value);
+                    }, 300); // Debounce search
+                });
+            }
 
             // Filter buttons
-            document.getElementById('searchFilters').addEventListener('click', (e) => {
-                if (e.target.classList.contains('filter-btn')) {
-                    document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
-                    e.target.classList.add('active');
-                    
-                    const category = e.target.dataset.category;
-                    // Could implement category filtering here
-                }
-            });
+            const searchFilters = document.getElementById('searchFilters');
+            if (searchFilters) {
+                searchFilters.addEventListener('click', (e) => {
+                    if (e.target.classList.contains('filter-btn')) {
+                        document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+                        e.target.classList.add('active');
+                        
+                        const category = e.target.dataset.category;
+                        // Could implement category filtering here
+                    }
+                });
+            }
+
+            // Manual control buttons
+            const backupBtn = document.getElementById('manualBackupBtn');
+            if (backupBtn) {
+                backupBtn.addEventListener('click', createManualBackup);
+            }
+
+            const syncBtn = document.getElementById('manualSyncBtn');
+            if (syncBtn) {
+                syncBtn.addEventListener('click', performManualSync);
+            }
 
             // Keyboard shortcuts
             document.addEventListener('keydown', (e) => {
                 if (e.ctrlKey || e.metaKey) {
                     if (e.key === 'k') {
                         e.preventDefault();
-                        searchInput.focus();
+                        const searchInput = document.getElementById('searchInput');
+                        if (searchInput) searchInput.focus();
                     } else if (e.key === 'r') {
                         e.preventDefault();
                         performManualSync();
@@ -1429,21 +1456,28 @@
                 }
                 
                 if (e.key === 'Escape') {
-                    if (document.getElementById('notesModal').classList.contains('show')) {
+                    const notesModal = document.getElementById('notesModal');
+                    const searchResults = document.getElementById('searchResults');
+                    const searchInput = document.getElementById('searchInput');
+                    
+                    if (notesModal && notesModal.classList.contains('show')) {
                         closeNotes();
-                    } else if (document.getElementById('searchResults').classList.contains('show')) {
-                        document.getElementById('searchResults').classList.remove('show');
-                        searchInput.value = '';
+                    } else if (searchResults && searchResults.classList.contains('show')) {
+                        searchResults.classList.remove('show');
+                        if (searchInput) searchInput.value = '';
                     }
                 }
             });
 
             // Close modal when clicking outside
-            document.getElementById('notesModal').addEventListener('click', (e) => {
-                if (e.target === e.currentTarget) {
-                    closeNotes();
-                }
-            });
+            const notesModal = document.getElementById('notesModal');
+            if (notesModal) {
+                notesModal.addEventListener('click', (e) => {
+                    if (e.target === e.currentTarget) {
+                        closeNotes();
+                    }
+                });
+            }
         }
 
         // ========================================================================================
@@ -1519,7 +1553,7 @@
         // ========================================================================================
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/metabolic-base/sw.js')
+                navigator.serviceWorker.register('./sw.js')
                     .then(registration => {
                         console.log('✅ Service Worker registriert:', registration.scope);
                     })
