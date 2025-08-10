@@ -5,12 +5,12 @@ class SyncManager {
         this.contentIndexer = new ContentIndexer();
         
        this.syncConfig = {
-        autoSyncInterval: 24 * 60 * 60 * 1000, // 24 Stunden (einmal täglich)
-        maxRetries: 3,
-        retryDelay: 2000,
-        backupInterval: 14 * 24 * 60 * 60 * 1000, // 14 Tage
-        cloudEnabled: false
-    };
+    autoSyncInterval: 0, // DEAKTIVIERT - keine automatische Sync
+    maxRetries: 3,
+    retryDelay: 2000,
+    backupInterval: 7 * 24 * 60 * 60 * 1000, // 7 Tage für Button-Farbe
+    cloudEnabled: false
+};
         
         this.syncHistory = this.loadSyncHistory();
         this.deviceInfo = this.getDeviceInfo();
@@ -30,9 +30,7 @@ class SyncManager {
         // Erste Synchronisation
         this.performInitialSync();
         
-        // Automatische Synchronisation starten
-        this.startAutoSync();
-        
+   
         // Online/Offline Events überwachen
         this.setupNetworkMonitoring();
         
@@ -333,19 +331,11 @@ class SyncManager {
     /**
      * Startet automatische Synchronisation
      */
-    startAutoSync() {
-        if (this.syncTimer) {
-            clearInterval(this.syncTimer);
-        }
+    sstartAutoSync() {
+    // Automatische Synchronisation ist deaktiviert
+    console.log('🚫 Auto-Sync ist deaktiviert - nur manuelle Sync');
+}
 
-        this.syncTimer = setInterval(() => {
-            if (this.isOnline && !document.hidden) {
-                this.quickSync();
-            }
-        }, this.syncConfig.autoSyncInterval);
-
-        console.log(`🔄 Auto-Sync aktiviert (${this.syncConfig.autoSyncInterval / 1000}s Intervall)`);
-    }
 
     /**
      * Führt schnelle Synchronisation durch
@@ -424,54 +414,10 @@ class SyncManager {
     /**
      * Backup-Erinnerungen einrichten
      */
-    setupBackupReminders() {
-        const lastBackup = localStorage.getItem('lastBackupDate');
-        const now = Date.now();
-        
-        if (!lastBackup || (now - parseInt(lastBackup)) > this.syncConfig.backupInterval) {
-            setTimeout(() => {
-                this.showBackupReminder();
-            }, 30000); // 30 Sekunden nach App-Start
-        }
-    }
-
-    /**
-     * Zeigt Backup-Erinnerung
-     */
-    showBackupReminder() {
-        const reminder = document.createElement('div');
-        reminder.style.cssText = `
-            position: fixed;
-            bottom: 20px;
-            left: 20px;
-            background: linear-gradient(135deg, #ffeaa7, #fdcb6e);
-            color: #2d3436;
-            padding: 20px;
-            border-radius: 16px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-            z-index: 1000;
-            max-width: 350px;
-            font-family: inherit;
-        `;
-        
-        reminder.innerHTML = `
-            <h4 style="margin: 0 0 10px 0; display: flex; align-items: center; gap: 8px;">
-                💾 Backup-Erinnerung
-            </h4>
-            <p style="margin: 0 0 15px 0; font-size: 0.9rem; line-height: 1.4;">
-                Zeit für ein Backup deiner Lernfortschritte und Notizen!
-            </p>
-            <div style="display: flex; gap: 10px;">
-                <button onclick="this.createBackup(); this.parentElement.parentElement.remove();" 
-                        style="flex: 1; padding: 10px; border: none; border-radius: 8px; background: #2d3436; color: white; cursor: pointer; font-weight: 500;">
-                    Jetzt sichern
-                </button>
-                <button onclick="this.parentElement.parentElement.remove()" 
-                        style="padding: 10px 15px; border: none; border-radius: 8px; background: #dfe6e9; cursor: pointer;">
-                    Später
-                </button>
-            </div>
-        `;
+   setupBackupReminders() {
+    // Keine Popup-Erinnerungen mehr
+    console.log('📅 Backup-Status wird über Button-Farbe angezeigt');
+}
         
         // Backup-Funktion hinzufügen
         reminder.querySelector('button').onclick = () => {
