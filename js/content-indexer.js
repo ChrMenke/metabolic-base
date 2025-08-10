@@ -11,16 +11,17 @@ class ContentIndexer {
             invertedIndex: {} // keyword -> [moduleIds]
         };
         
+        // Doppelte Stoppwörter entfernt
         this.stopWords = new Set([
             'der', 'die', 'das', 'und', 'oder', 'aber', 'mit', 'von', 'zu', 'in', 'an', 'auf',
             'für', 'bei', 'durch', 'über', 'unter', 'nach', 'vor', 'bis', 'seit', 'während',
-            'wegen', 'trotz', 'ohne', 'gegen', 'um', 'zwischen', 'neben', 'hinter', 'vor',
+            'wegen', 'trotz', 'ohne', 'gegen', 'um', 'zwischen', 'neben', 'hinter',
             'ich', 'du', 'er', 'sie', 'es', 'wir', 'ihr', 'sich', 'mich', 'dich', 'uns', 'euch',
             'ist', 'sind', 'war', 'waren', 'hat', 'haben', 'wird', 'werden', 'kann', 'könnte',
             'soll', 'sollte', 'muss', 'müssen', 'darf', 'dürfen', 'will', 'wollen', 'mag', 'mögen',
             'ein', 'eine', 'einer', 'einem', 'einen', 'kein', 'keine', 'keiner', 'keinem', 'keinen',
             'this', 'that', 'with', 'from', 'they', 'been', 'have', 'their', 'said', 'each',
-            'which', 'would', 'there', 'what', 'been', 'more', 'very', 'like', 'well', 'just'
+            'which', 'would', 'there', 'what', 'more', 'very', 'like', 'well', 'just'
         ]);
         
         this.medicalTerms = new Set([
@@ -36,6 +37,9 @@ class ContentIndexer {
             'hyperammonämie', 'hypoglykämie', 'ketoazidose', 'laktatazidose', 'azidose'
         ]);
         
+        // Request-Throttling für bessere Performance
+        this.maxConcurrentRequests = 5;
+        
         this.loadIndex();
     }
 
@@ -43,6 +47,11 @@ class ContentIndexer {
      * Lädt den bestehenden Suchindex aus localStorage
      */
     loadIndex() {
+        if (!this.isLocalStorageAvailable()) {
+            console.warn('⚠️ localStorage nicht verfügbar - Index wird nur im Arbeitsspeicher gehalten');
+            return;
+        }
+
         const saved = localStorage.getItem('searchIndex');
         if (saved) {
             try {
@@ -63,14 +72,37 @@ class ContentIndexer {
      * Speichert den Suchindex in localStorage
      */
     saveIndex() {
-        const toSave = {
-            ...this.searchIndex,
-            keywords: Array.from(this.searchIndex.keywords),
-            lastUpdate: new Date().toISOString()
-        };
-        
-        localStorage.setItem('searchIndex', JSON.stringify(toSave));
-        console.log('💾 Suchindex gespeichert:', this.searchIndex.totalIndexedModules, 'Module');
+        if (!this.isLocalStorageAvailable()) {
+            console.warn('⚠️ localStorage nicht verfügbar - Index kann nicht gespeichert werden');
+            return;
+        }
+
+        try {
+            const toSave = {
+                ...this.searchIndex,
+                keywords: Array.from(this.searchIndex.keywords),
+                lastUpdate: new Date().toISOString()
+            };
+            
+            localStorage.setItem('searchIndex', JSON.stringify(toSave));
+            console.log('💾 Suchindex gespeichert:', this.searchIndex.totalIndexedModules, 'Module');
+        } catch (error) {
+            console.warn('⚠️ Suchindex konnte nicht gespeichert werden:', error);
+        }
+    }
+
+    /**
+     * Prüft ob localStorage verfügbar ist
+     */
+    isLocalStorageAvailable() {
+        try {
+            const test = '__localStorage_test__';
+            localStorage.setItem(test, test);
+            localStorage.removeItem(test);
+            return true;
+        } catch (e) {
+            return false;
+        }
     }
 
     /**
@@ -86,28 +118,46 @@ class ContentIndexer {
         this.searchIndex.invertedIndex = {};
         this.searchIndex.totalIndexedModules = 0;
 
-        // Auto-Discovery Registry holen
-        const autoDiscovery = new AutoDiscovery();
-        const registry = autoDiscovery.getRegistry();
+        try {
+            // Auto-Discovery Registry holen
+            const autoDiscovery = new AutoDiscovery();
+            const registry = autoDiscovery.getRegistry();
 
-        // Alle Module indexieren
-        const indexPromises = Object.values(registry.modules).map(module => 
-            this.indexModule(module)
-        );
+            // Module in Batches verarbeiten für bessere Performance
+            const modules = Object.values(registry.modules);
+            await this.processBatches(modules, this.maxConcurrentRequests);
 
-        await Promise.all(indexPromises);
+            // Inverted Index erstellen
+            this.buildInvertedIndex();
 
-        // Inverted Index erstellen
-        this.buildInvertedIndex();
+            // Kategorie-Statistiken erstellen
+            this.buildCategoryStats();
 
-        // Kategorie-Statistiken erstellen
-        this.buildCategoryStats();
+            // Index speichern
+            this.saveIndex();
 
-        // Index speichern
-        this.saveIndex();
+            console.log(`✅ Content-Indexierung abgeschlossen: ${this.searchIndex.totalIndexedModules} Module indexiert`);
+            console.log(`📚 ${this.searchIndex.keywords.size} eindeutige Keywords gefunden`);
+        } catch (error) {
+            console.error('❌ Fehler bei der Content-Indexierung:', error);
+        }
+    }
 
-        console.log(`✅ Content-Indexierung abgeschlossen: ${this.searchIndex.totalIndexedModules} Module indexiert`);
-        console.log(`📚 ${this.searchIndex.keywords.size} eindeutige Keywords gefunden`);
+    /**
+     * Verarbeitet Module in Batches um Browser nicht zu überlasten
+     */
+    async processBatches(modules, batchSize) {
+        for (let i = 0; i < modules.length; i += batchSize) {
+            const batch = modules.slice(i, i + batchSize);
+            const batchPromises = batch.map(module => this.indexModule(module));
+            
+            await Promise.all(batchPromises);
+            
+            // Kurze Pause zwischen Batches
+            if (i + batchSize < modules.length) {
+                await new Promise(resolve => setTimeout(resolve, 100));
+            }
+        }
     }
 
     /**
@@ -117,10 +167,10 @@ class ContentIndexer {
         try {
             console.log(`📄 Indexiere: ${module.title}`);
             
-            // HTML-Inhalt laden
-            const response = await fetch(module.path);
+            // HTML-Inhalt laden mit Timeout
+            const response = await this.fetchWithTimeout(module.path, 10000);
             if (!response.ok) {
-                console.warn(`⚠️ Konnte ${module.path} nicht laden`);
+                console.warn(`⚠️ Konnte ${module.path} nicht laden (${response.status})`);
                 return;
             }
 
@@ -141,6 +191,23 @@ class ContentIndexer {
     }
 
     /**
+     * Fetch mit Timeout
+     */
+    async fetchWithTimeout(url, timeout = 10000) {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), timeout);
+        
+        try {
+            const response = await fetch(url, { signal: controller.signal });
+            clearTimeout(timeoutId);
+            return response;
+        } catch (error) {
+            clearTimeout(timeoutId);
+            throw error;
+        }
+    }
+
+    /**
      * Extrahiert und verarbeitet den Inhalt eines HTML-Dokuments
      */
     extractAndProcessContent(doc, module) {
@@ -156,8 +223,8 @@ class ContentIndexer {
             readingTime: 0
         };
 
-        // Titel verarbeiten
-        content.keywords.add(...this.extractKeywords(module.title));
+        // Titel verarbeiten - FIX: forEach statt spread operator
+        this.extractKeywords(module.title).forEach(keyword => content.keywords.add(keyword));
 
         // Hauptinhalt extrahieren
         this.extractSections(doc, content);
@@ -168,10 +235,12 @@ class ContentIndexer {
         // Listen extrahieren
         this.extractLists(doc, content);
 
-        // Meta-Keywords extrahieren
+        // Meta-Keywords extrahieren - FIX: forEach statt spread operator
         const metaKeywords = doc.querySelector('meta[name="keywords"]')?.getAttribute('content');
         if (metaKeywords) {
-            content.keywords.add(...metaKeywords.split(',').map(k => k.trim().toLowerCase()));
+            metaKeywords.split(',')
+                .map(k => k.trim().toLowerCase())
+                .forEach(keyword => content.keywords.add(keyword));
         }
 
         // Medizinische Begriffe identifizieren
@@ -219,9 +288,9 @@ class ContentIndexer {
                 .filter(text => text.length > 0)
                 .join(' ');
 
-            // Keywords aus Überschrift und Inhalt extrahieren
-            section.keywords.add(...this.extractKeywords(section.title));
-            section.keywords.add(...this.extractKeywords(section.content));
+            // Keywords aus Überschrift und Inhalt extrahieren - FIX: forEach statt spread
+            this.extractKeywords(section.title).forEach(keyword => section.keywords.add(keyword));
+            this.extractKeywords(section.content).forEach(keyword => section.keywords.add(keyword));
 
             content.sections.push(section);
             content.fullText += section.title + ' ' + section.content + ' ';
@@ -234,7 +303,7 @@ class ContentIndexer {
             const text = p.textContent.trim();
             if (text.length > 20) { // Nur relevante Texte
                 content.fullText += text + ' ';
-                content.keywords.add(...this.extractKeywords(text));
+                this.extractKeywords(text).forEach(keyword => content.keywords.add(keyword));
             }
         });
     }
@@ -258,7 +327,7 @@ class ContentIndexer {
             headerCells.forEach(th => {
                 const headerText = th.textContent.trim();
                 tableData.headers.push(headerText);
-                tableData.keywords.add(...this.extractKeywords(headerText));
+                this.extractKeywords(headerText).forEach(keyword => tableData.keywords.add(keyword));
             });
 
             // Datenzeilen extrahieren
@@ -270,7 +339,7 @@ class ContentIndexer {
                     tableData.rows.push(rowData);
                     
                     rowData.forEach(cellText => {
-                        tableData.keywords.add(...this.extractKeywords(cellText));
+                        this.extractKeywords(cellText).forEach(keyword => tableData.keywords.add(keyword));
                     });
                 }
             });
@@ -297,7 +366,7 @@ class ContentIndexer {
             items.forEach(li => {
                 const itemText = li.textContent.trim();
                 listData.items.push(itemText);
-                listData.keywords.add(...this.extractKeywords(itemText));
+                this.extractKeywords(itemText).forEach(keyword => listData.keywords.add(keyword));
             });
 
             content.sections.push(listData);
@@ -408,7 +477,9 @@ class ContentIndexer {
             maxResults = 50,
             categoryFilter = null,
             fuzzySearch = true,
-            includeExcerpts = true
+            includeExcerpts = true,
+            fuzzyThreshold = 0.7,
+            maxFuzzyChecks = 1000 // Performance-Limit für Fuzzy Search
         } = options;
 
         if (!query || query.length < 2) {
@@ -427,18 +498,29 @@ class ContentIndexer {
             }
         });
 
-        // Fuzzy Search für bessere Ergebnisse
-        if (fuzzySearch) {
-            Object.keys(this.searchIndex.invertedIndex).forEach(indexedKeyword => {
-                queryKeywords.forEach(queryKeyword => {
-                    const similarity = this.calculateSimilarity(queryKeyword, indexedKeyword);
-                    if (similarity > 0.7 && similarity < 1.0) {
+        // Optimierter Fuzzy Search mit Performance-Limits
+        if (fuzzySearch && queryKeywords.length > 0) {
+            const indexedKeywords = Object.keys(this.searchIndex.invertedIndex);
+            let fuzzyChecks = 0;
+            
+            for (const indexedKeyword of indexedKeywords) {
+                if (fuzzyChecks >= maxFuzzyChecks) break;
+                
+                // Nur Keywords ähnlicher Länge prüfen (Performance-Optimierung)
+                const lengthDiff = Math.abs(indexedKeyword.length - queryKeywords[0].length);
+                if (lengthDiff > 3) continue;
+                
+                for (const queryKeyword of queryKeywords) {
+                    const similarity = this.calculateJaroWinkler(queryKeyword, indexedKeyword);
+                    if (similarity > fuzzyThreshold && similarity < 1.0) {
                         this.searchIndex.invertedIndex[indexedKeyword].forEach(moduleId => {
                             this.addSearchResult(results, moduleId, indexedKeyword, 'fuzzy', includeExcerpts, similarity);
                         });
+                        break;
                     }
-                });
-            });
+                    fuzzyChecks++;
+                }
+            }
         }
 
         // Nach Kategorie filtern
@@ -488,7 +570,9 @@ class ContentIndexer {
         }
         
         existingResult.relevanceScore += score;
-        existingResult.matchedKeywords.push(keyword);
+        if (!existingResult.matchedKeywords.includes(keyword)) {
+            existingResult.matchedKeywords.push(keyword);
+        }
 
         // Textauszüge erstellen
         if (includeExcerpts) {
@@ -518,40 +602,77 @@ class ContentIndexer {
         if (end < text.length) excerpt = excerpt + '...';
 
         // Keyword hervorheben
-        const regex = new RegExp(`(${keyword})`, 'gi');
+        const regex = new RegExp(`(${this.escapeRegex(keyword)})`, 'gi');
         excerpt = excerpt.replace(regex, '<mark>$1</mark>');
 
         return excerpt;
     }
 
     /**
-     * Berechnet die Ähnlichkeit zwischen zwei Strings (Levenshtein-basiert)
+     * Escaped Regex-Zeichen für sichere Verwendung in RegExp
      */
-    calculateSimilarity(str1, str2) {
-        const len1 = str1.length;
-        const len2 = str2.length;
-        
-        if (len1 === 0) return len2 === 0 ? 1 : 0;
-        if (len2 === 0) return 0;
+    escapeRegex(string) {
+        return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    }
 
-        const matrix = Array(len2 + 1).fill().map(() => Array(len1 + 1).fill(0));
+    /**
+     * Berechnet Jaro-Winkler-Ähnlichkeit (effizienter als Levenshtein für Keyword-Suche)
+     */
+    calculateJaroWinkler(s1, s2) {
+        if (s1 === s2) return 1.0;
+        if (s1.length === 0 || s2.length === 0) return 0.0;
 
-        for (let i = 0; i <= len1; i++) matrix[0][i] = i;
-        for (let j = 0; j <= len2; j++) matrix[j][0] = j;
+        const matchWindow = Math.floor(Math.max(s1.length, s2.length) / 2) - 1;
+        if (matchWindow < 0) return 0.0;
 
-        for (let j = 1; j <= len2; j++) {
-            for (let i = 1; i <= len1; i++) {
-                const cost = str1[i - 1] === str2[j - 1] ? 0 : 1;
-                matrix[j][i] = Math.min(
-                    matrix[j - 1][i] + 1,
-                    matrix[j][i - 1] + 1,
-                    matrix[j - 1][i - 1] + cost
-                );
+        const s1Matches = new Array(s1.length).fill(false);
+        const s2Matches = new Array(s2.length).fill(false);
+
+        let matches = 0;
+        let transpositions = 0;
+
+        // Identifiziere Matches
+        for (let i = 0; i < s1.length; i++) {
+            const start = Math.max(0, i - matchWindow);
+            const end = Math.min(i + matchWindow + 1, s2.length);
+
+            for (let j = start; j < end; j++) {
+                if (s2Matches[j] || s1[i] !== s2[j]) continue;
+                s1Matches[i] = true;
+                s2Matches[j] = true;
+                matches++;
+                break;
             }
         }
 
-        const maxLen = Math.max(len1, len2);
-        return (maxLen - matrix[len2][len1]) / maxLen;
+        if (matches === 0) return 0.0;
+
+        // Zähle Transpositions
+        let k = 0;
+        for (let i = 0; i < s1.length; i++) {
+            if (!s1Matches[i]) continue;
+            while (!s2Matches[k]) k++;
+            if (s1[i] !== s2[k]) transpositions++;
+            k++;
+        }
+
+        const jaro = (matches / s1.length + matches / s2.length + (matches - transpositions / 2) / matches) / 3;
+
+        // Winkler-Bonus für gemeinsamen Prefix
+        const prefix = Math.min(4, this.getCommonPrefixLength(s1, s2));
+        return jaro + (0.1 * prefix * (1 - jaro));
+    }
+
+    /**
+     * Ermittelt die Länge des gemeinsamen Prefixes
+     */
+    getCommonPrefixLength(s1, s2) {
+        let prefix = 0;
+        for (let i = 0; i < Math.min(s1.length, s2.length); i++) {
+            if (s1[i] === s2[i]) prefix++;
+            else break;
+        }
+        return prefix;
     }
 
     /**
@@ -616,26 +737,30 @@ class ContentIndexer {
      * Importiert einen Index von anderem Gerät
      */
     importIndex(importedIndex) {
-        // Merge-Strategie: Behalte neuere Inhalte
-        Object.entries(importedIndex.index).forEach(([moduleId, content]) => {
-            this.searchIndex.index[moduleId] = content;
-        });
-
-        // Keywords zusammenführen
-        if (importedIndex.keywords) {
-            importedIndex.keywords.forEach(keyword => {
-                this.searchIndex.keywords.add(keyword);
+        try {
+            // Merge-Strategie: Behalte neuere Inhalte
+            Object.entries(importedIndex.index).forEach(([moduleId, content]) => {
+                this.searchIndex.index[moduleId] = content;
             });
-        }
 
-        // Inverted Index und Kategorien neu aufbauen
-        this.buildInvertedIndex();
-        this.buildCategoryStats();
-        
-        this.searchIndex.totalIndexedModules = Object.keys(this.searchIndex.index).length;
-        this.saveIndex();
-        
-        console.log('📥 Suchindex erfolgreich importiert');
+            // Keywords zusammenführen
+            if (importedIndex.keywords) {
+                importedIndex.keywords.forEach(keyword => {
+                    this.searchIndex.keywords.add(keyword);
+                });
+            }
+
+            // Inverted Index und Kategorien neu aufbauen
+            this.buildInvertedIndex();
+            this.buildCategoryStats();
+            
+            this.searchIndex.totalIndexedModules = Object.keys(this.searchIndex.index).length;
+            this.saveIndex();
+            
+            console.log('📥 Suchindex erfolgreich importiert');
+        } catch (error) {
+            console.error('❌ Fehler beim Importieren des Suchindex:', error);
+        }
     }
 
     /**
@@ -648,8 +773,26 @@ class ContentIndexer {
             totalInvertedEntries: Object.keys(this.searchIndex.invertedIndex).length,
             categoriesIndexed: Object.keys(this.searchIndex.categories).length,
             lastUpdate: this.searchIndex.lastUpdate,
-            indexSize: JSON.stringify(this.searchIndex).length
+            indexSize: JSON.stringify(this.searchIndex).length,
+            localStorageAvailable: this.isLocalStorageAvailable()
         };
+    }
+
+    /**
+     * Löscht den kompletten Index
+     */
+    clearIndex() {
+        this.searchIndex.index = {};
+        this.searchIndex.keywords.clear();
+        this.searchIndex.categories = {};
+        this.searchIndex.invertedIndex = {};
+        this.searchIndex.totalIndexedModules = 0;
+        
+        if (this.isLocalStorageAvailable()) {
+            localStorage.removeItem('searchIndex');
+        }
+        
+        console.log('🗑️ Suchindex wurde gelöscht');
     }
 }
 
