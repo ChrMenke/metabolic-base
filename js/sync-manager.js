@@ -4,13 +4,13 @@ class SyncManager {
         this.autoDiscovery = new AutoDiscovery();
         this.contentIndexer = new ContentIndexer();
         
-        this.syncConfig = {
-            autoSyncInterval: 5 * 60 * 1000, // 5 Minuten
-            maxRetries: 3,
-            retryDelay: 2000,
-            backupInterval: 24 * 60 * 60 * 1000, // 24 Stunden
-            cloudEnabled: false
-        };
+       this.syncConfig = {
+        autoSyncInterval: 24 * 60 * 60 * 1000, // 24 Stunden (einmal täglich)
+        maxRetries: 3,
+        retryDelay: 2000,
+        backupInterval: 14 * 24 * 60 * 60 * 1000, // 14 Tage
+        cloudEnabled: false
+    };
         
         this.syncHistory = this.loadSyncHistory();
         this.deviceInfo = this.getDeviceInfo();
