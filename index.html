@@ -426,6 +426,10 @@
             color: white;
         }
         
+        .progress-btn.completed {
+            background: linear-gradient(135deg, #00b894, #00cec9);
+        }
+        
         .action-btn:hover {
             transform: scale(1.15);
             box-shadow: var(--shadow-sm);
@@ -608,6 +612,71 @@
             font-size: 0.9rem;
             color: var(--text-secondary);
         }
+
+        /* Notes Modal */
+        .notes-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 10000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .notes-modal.show {
+            display: flex;
+        }
+        
+        .notes-modal-content {
+            background: var(--bg-white);
+            border-radius: var(--border-radius-lg);
+            padding: var(--spacing-xl);
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        
+        .notes-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--spacing-lg);
+        }
+        
+        .notes-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--text-muted);
+        }
+        
+        .notes-textarea {
+            width: 100%;
+            min-height: 300px;
+            padding: var(--spacing-md);
+            border: 2px solid #e2e8f0;
+            border-radius: var(--border-radius);
+            font-family: inherit;
+            font-size: 1rem;
+            resize: vertical;
+        }
+        
+        .notes-save {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-weight: 600;
+            margin-top: var(--spacing-md);
+        }
         
         /* Responsive Design */
         @media (max-width: 768px) {
@@ -751,16 +820,55 @@
                 </button>
             </div>
         </section>
+
+        <!-- Notes Modal -->
+        <div class="notes-modal" id="notesModal">
+            <div class="notes-modal-content">
+                <div class="notes-header">
+                    <h3 id="notesTitle">Notizen</h3>
+                    <button class="notes-close" onclick="closeNotes()">✕</button>
+                </div>
+                <textarea class="notes-textarea" id="notesTextarea" placeholder="Hier können Sie Ihre Notizen zu diesem Modul eingeben..."></textarea>
+                <button class="notes-save" onclick="saveNotes()">Notizen speichern</button>
+            </div>
+        </div>
     </div>
 
-    <!-- Scripts -->
-    <script src="js/auto-discovery.js"></script>
-    <script src="js/content-indexer.js"></script>
-    <script src="js/smart-search.js"></script>
-    <script src="js/sync-manager.js"></script>
-
     <script>
-        // Theme Management
+        // ========================================================================================
+        // STANDALONE METABOLIC BASE - Alle Funktionen eingebaut
+        // ========================================================================================
+
+        // Global Variables
+        let app;
+        let currentNoteModuleId = null;
+        let searchTimeout = null;
+        let moduleRegistry = {
+            totalModules: 0,
+            categories: {},
+            modules: {},
+            lastUpdate: null
+        };
+
+        // Categories Definition
+        const categories = {
+            'notfaelle': { title: 'Notfälle', subtitle: 'Akute metabolische Krisen', icon: '🚨' },
+            'befundung': { title: 'Befundung', subtitle: 'Aminosäureprofile & organische Säuren', icon: '📊' },
+            'differentialdiagnostik': { title: 'Differentialdiagnostik', subtitle: 'Systematische Abklärung', icon: '🔍' },
+            'aminosaeuren': { title: 'Aminosäurestoffwechsel', subtitle: 'Störungen im Aminosäurestoffwechsel', icon: '🧬' },
+            'kohlenhydrate': { title: 'Kohlenhydratstoffwechsel', subtitle: 'Glykogenosen & mehr', icon: '🍯' },
+            'carnitin': { title: 'Carnitinstoffwechsel', subtitle: 'Transport & Oxidation', icon: '🚛' },
+            'energie': { title: 'Energiestoffwechsel', subtitle: 'Mitochondriale & FAO-Störungen', icon: '⚡' },
+            'lipide': { title: 'Lipidstoffwechsel', subtitle: 'Fettstoffwechselstörungen', icon: '🫧' },
+            'purin-pyrimidin': { title: 'Purin/Pyrimidin', subtitle: 'Nucleotidstoffwechsel', icon: '🧬' },
+            'lysosomal': { title: 'Lysosomale Störungen', subtitle: 'Speichererkrankungen', icon: '📦' },
+            'cdg': { title: 'CDG', subtitle: 'Congenital Disorders of Glycosylation', icon: '🔗' },
+            'sonstige': { title: 'Sonstige IEM', subtitle: 'Weitere Stoffwechseldefekte', icon: '📚' }
+        };
+
+        // ========================================================================================
+        // THEME MANAGEMENT
+        // ========================================================================================
         function toggleTheme() {
             const currentTheme = document.body.getAttribute('data-theme');
             const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
@@ -780,7 +888,9 @@
             toggleBtn.textContent = savedTheme === 'light' ? '🌙 Dark' : '☀️ Light';
         }
 
-        // Notification System
+        // ========================================================================================
+        // NOTIFICATION SYSTEM
+        // ========================================================================================
         function showNotification(message, type = 'info') {
             const notification = document.createElement('div');
             notification.style.cssText = `
@@ -816,186 +926,404 @@
             }, 4000);
         }
 
-        // App Initialization
-        class MetabolicBase {
-            constructor() {
-                this.autoDiscovery = new AutoDiscovery();
-                this.contentIndexer = new ContentIndexer();
-                this.smartSearch = new SmartSearch();
-                this.syncManager = new SyncManager();
-                
-                this.categories = {
-                    'notfaelle': { title: 'Notfälle', subtitle: 'Akute metabolische Krisen', icon: '🚨' },
-                    'befundung': { title: 'Befundung', subtitle: 'Aminosäureprofile & organische Säuren', icon: '📊' },
-                    'differentialdiagnostik': { title: 'Differentialdiagnostik', subtitle: 'Systematische Abklärung', icon: '🔍' },
-                    'aminosaeuren': { title: 'Aminosäurestoffwechsel', subtitle: 'Störungen im Aminosäurestoffwechsel', icon: '🧬' },
-                    'kohlenhydrate': { title: 'Kohlenhydratstoffwechsel', subtitle: 'Glykogenosen & mehr', icon: '🍯' },
-                    'carnitin': { title: 'Carnitinstoffwechsel', subtitle: 'Transport & Oxidation', icon: '🚛' },
-                    'energie': { title: 'Energiestoffwechsel', subtitle: 'Mitochondriale & FAO-Störungen', icon: '⚡' },
-                    'lipide': { title: 'Lipidstoffwechsel', subtitle: 'Fettstoffwechselstörungen', icon: '🫧' },
-                    'purin-pyrimidin': { title: 'Purin/Pyrimidin', subtitle: 'Nucleotidstoffwechsel', icon: '🧬' },
-                    'lysosomal': { title: 'Lysosomale Störungen', subtitle: 'Speichererkrankungen', icon: '📦' },
-                    'cdg': { title: 'CDG', subtitle: 'Congenital Disorders of Glycosylation', icon: '🔗' },
-                    'sonstige': { title: 'Sonstige IEM', subtitle: 'Weitere Stoffwechseldefekte', icon: '📚' }
-                };
-            }
+        // ========================================================================================
+        // AUTO-DISCOVERY SYSTEM
+        // ========================================================================================
+        async function scanForModules() {
+            console.log('🔍 Starte Modul-Scan...');
+            
+            // Reset registry
+            moduleRegistry = {
+                totalModules: 0,
+                categories: {},
+                modules: {},
+                lastUpdate: new Date().toISOString()
+            };
 
-            async init() {
-                console.log('🚀 Metabolic Base wird initialisiert...');
-                
-                // Theme laden
-                loadTheme();
-                
-                // Auto-Discovery starten
-                await this.autoDiscovery.scanForModules();
-                
-                // Content-Indexer initialisieren
-                await this.contentIndexer.buildIndex();
-                
-                // UI aktualisieren
-                this.updateUI();
-                
-                // Event Listeners
-                this.setupEventListeners();
-                
-                // Sync-Manager starten
-                this.syncManager.init();
-                
-                showNotification('Metabolic Base erfolgreich geladen! 🎉', 'success');
-            }
+            // Initialize all categories
+            Object.keys(categories).forEach(key => {
+                moduleRegistry.categories[key] = [];
+            });
 
-            updateUI() {
-                const registry = this.autoDiscovery.getRegistry();
-                
-                // Status aktualisieren
-                document.getElementById('totalModules').textContent = registry.totalModules;
-                document.getElementById('completedModules').textContent = this.getCompletedCount();
-                document.getElementById('lastSyncTime').textContent = this.getLastSyncTime();
-                
-                // Categories Grid rendern
-                this.renderCategories(registry);
-            }
+            // Common module file patterns
+            const patterns = [
+                'index.html', 'teil1.html', 'teil2.html', 'teil3.html', 'teil4.html', 'teil5.html',
+                'part1.html', 'part2.html', 'part3.html', 'part4.html', 'part5.html',
+                'modul1.html', 'modul2.html', 'modul3.html', 'modul4.html', 'modul5.html',
+                'grundlagen.html', 'diagnostik.html', 'therapie.html', 'klinik.html',
+                'lerneinheit.html', 'uebersicht.html', 'zusammenfassung.html'
+            ];
 
-            renderCategories(registry) {
-                const grid = document.getElementById('categoriesGrid');
-                grid.innerHTML = '';
-
-                Object.entries(this.categories).forEach(([categoryKey, categoryInfo]) => {
-                    const modules = registry.categories[categoryKey] || [];
-                    
-                    const categoryCard = document.createElement('div');
-                    categoryCard.className = 'category-card';
-                    categoryCard.innerHTML = `
-                        <div class="category-header">
-                            <div class="category-icon">${categoryInfo.icon}</div>
-                            <div class="category-info">
-                                <h3 class="category-title">${categoryInfo.title}</h3>
-                                <p class="category-subtitle">${categoryInfo.subtitle}</p>
-                            </div>
-                            <span class="category-count">${modules.length}</span>
-                        </div>
-                        <div class="modules-list">
-                            ${modules.length === 0 ? 
-                                '<div class="empty-state"><div class="icon">📭</div><p>Noch keine Module in dieser Kategorie</p></div>' :
-                                modules.map(module => `
-                                    <a href="${module.path}" class="module-item" data-module-id="${module.id}">
-                                        <div class="module-info">
-                                            <div class="module-title">${module.title}</div>
-                                            <div class="module-subtitle">${module.subtitle || 'Lernmodul'}</div>
-                                        </div>
-                                        <div class="module-actions">
-                                            <button class="action-btn notes-btn" onclick="event.preventDefault(); openNotes('${module.id}')" title="Notizen">📝</button>
-                                            <button class="action-btn progress-btn" onclick="event.preventDefault(); toggleProgress('${module.id}')" title="Fortschritt">✓</button>
-                                        </div>
-                                    </a>
-                                `).join('')
+            // Scan each category
+            for (const [categoryKey, categoryInfo] of Object.entries(categories)) {
+                const categoryPath = `/metabolic-base/modules/${getCategoryFolder(categoryKey)}/`;
+                
+                for (const pattern of patterns) {
+                    const modulePath = categoryPath + pattern;
+                    try {
+                        const response = await fetch(modulePath, { method: 'HEAD' });
+                        if (response.ok) {
+                            const moduleData = await createModuleData(modulePath, categoryKey, pattern);
+                            if (moduleData) {
+                                moduleRegistry.modules[moduleData.id] = moduleData;
+                                moduleRegistry.categories[categoryKey].push(moduleData);
+                                moduleRegistry.totalModules++;
+                                console.log(`📄 Modul gefunden: ${moduleData.title}`);
                             }
-                        </div>
-                    `;
-                    
-                    grid.appendChild(categoryCard);
-                });
-            }
-
-            setupEventListeners() {
-                // Search
-                const searchInput = document.getElementById('searchInput');
-                searchInput.addEventListener('input', (e) => {
-                    this.smartSearch.search(e.target.value);
-                });
-
-                // Filter buttons
-                document.getElementById('searchFilters').addEventListener('click', (e) => {
-                    if (e.target.classList.contains('filter-btn')) {
-                        document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
-                        e.target.classList.add('active');
-                        
-                        const category = e.target.dataset.category;
-                        this.smartSearch.filterByCategory(category);
-                    }
-                });
-
-                // Keyboard shortcuts
-                document.addEventListener('keydown', (e) => {
-                    if (e.ctrlKey || e.metaKey) {
-                        if (e.key === 'k') {
-                            e.preventDefault();
-                            searchInput.focus();
-                        } else if (e.key === 'r') {
-                            e.preventDefault();
-                            this.refreshModules();
                         }
-                    }
-                });
-            }
-
-            async refreshModules() {
-                showNotification('Module werden neu gescannt...', 'info');
-                await this.autoDiscovery.scanForModules();
-                await this.contentIndexer.buildIndex();
-                this.updateUI();
-                showNotification('Module aktualisiert! 🔄', 'success');
-            }
-
-            getCompletedCount() {
-                let count = 0;
-                for (let i = 0; i < localStorage.length; i++) {
-                    const key = localStorage.key(i);
-                    if (key.startsWith('progress_') && localStorage.getItem(key) === 'completed') {
-                        count++;
+                    } catch (error) {
+                        // File doesn't exist, continue
                     }
                 }
-                return count;
             }
 
-            getLastSyncTime() {
-                const lastSync = localStorage.getItem('lastSync');
-                if (!lastSync) return 'Nie';
-                
-                const date = new Date(parseInt(lastSync));
-                return date.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+            console.log(`✅ Scan abgeschlossen: ${moduleRegistry.totalModules} Module gefunden`);
+            return moduleRegistry;
+        }
+
+        function getCategoryFolder(categoryKey) {
+            const folderMap = {
+                'notfaelle': '01-notfaelle',
+                'befundung': '02-befundung',
+                'differentialdiagnostik': '03-differentialdiagnostik',
+                'aminosaeuren': '04-aminosaeuren',
+                'kohlenhydrate': '05-kohlenhydrate',
+                'carnitin': '06-carnitin',
+                'energie': '07-energie',
+                'lipide': '08-lipide',
+                'purin-pyrimidin': '09-purin-pyrimidin',
+                'lysosomal': '10-lysosomal',
+                'cdg': '11-cdg',
+                'sonstige': '12-sonstige'
+            };
+            return folderMap[categoryKey] || '12-sonstige';
+        }
+
+        async function createModuleData(path, categoryKey, fileName) {
+            try {
+                // Generate module data based on file path and name
+                const id = path.replace(/[^a-zA-Z0-9]/g, '_').toLowerCase();
+                const title = beautifyFileName(fileName);
+                const subtitle = categories[categoryKey]?.title || 'Lernmodul';
+
+                return {
+                    id,
+                    title,
+                    subtitle,
+                    path,
+                    category: categoryKey,
+                    fileName,
+                    lastModified: new Date().toISOString()
+                };
+            } catch (error) {
+                console.warn(`⚠️ Fehler beim Erstellen der Modul-Daten für ${path}:`, error);
+                return null;
             }
         }
 
-        // Manual Controls Functions (GLOBAL)
+        function beautifyFileName(fileName) {
+            return fileName
+                .replace('.html', '')
+                .replace(/[_-]/g, ' ')
+                .replace(/\b\w/g, l => l.toUpperCase())
+                .replace(/teil(\d+)/gi, 'Teil $1')
+                .replace(/part(\d+)/gi, 'Teil $1')
+                .replace(/modul(\d+)/gi, 'Modul $1');
+        }
+
+        // ========================================================================================
+        // SEARCH SYSTEM
+        // ========================================================================================
+        function performSearch(query) {
+            const searchResults = document.getElementById('searchResults');
+            const searchResultsList = document.getElementById('searchResultsList');
+            
+            if (!query || query.length < 2) {
+                searchResults.classList.remove('show');
+                return;
+            }
+
+            const results = searchModules(query);
+            
+            if (results.length === 0) {
+                searchResultsList.innerHTML = `
+                    <div class="empty-state">
+                        <div class="icon">🔍</div>
+                        <h3>Keine Ergebnisse gefunden</h3>
+                        <p>Keine Module für "${query}" gefunden.</p>
+                    </div>
+                `;
+            } else {
+                const resultItems = results.map(result => `
+                    <div class="search-result-item" onclick="window.open('${result.path}', '_blank')">
+                        <div class="result-title">${highlightText(result.title, query)}</div>
+                        <div class="result-category">${categories[result.category]?.title || result.category}</div>
+                        <div class="result-excerpt">${result.subtitle}</div>
+                    </div>
+                `).join('');
+
+                searchResultsList.innerHTML = `
+                    <div style="margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 2px solid var(--bg-lighter);">
+                        <h3 style="margin: 0; color: var(--text-primary);">
+                            ${results.length} Ergebnis${results.length !== 1 ? 'se' : ''} für "${query}"
+                        </h3>
+                    </div>
+                    ${resultItems}
+                `;
+            }
+            
+            searchResults.classList.add('show');
+        }
+
+        function searchModules(query) {
+            const queryLower = query.toLowerCase();
+            const results = [];
+            
+            Object.values(moduleRegistry.modules).forEach(module => {
+                let score = 0;
+                
+                // Title match (highest priority)
+                if (module.title.toLowerCase().includes(queryLower)) {
+                    score += 10;
+                }
+                
+                // Category match
+                const categoryTitle = categories[module.category]?.title || '';
+                if (categoryTitle.toLowerCase().includes(queryLower)) {
+                    score += 5;
+                }
+                
+                // Filename match
+                if (module.fileName.toLowerCase().includes(queryLower)) {
+                    score += 3;
+                }
+                
+                if (score > 0) {
+                    results.push({ ...module, relevanceScore: score });
+                }
+            });
+            
+            return results.sort((a, b) => b.relevanceScore - a.relevanceScore);
+        }
+
+        function highlightText(text, query) {
+            if (!query) return text;
+            
+            const regex = new RegExp(`(${query})`, 'gi');
+            return text.replace(regex, '<span class="highlight">$1</span>');
+        }
+
+        // ========================================================================================
+        // UI MANAGEMENT
+        // ========================================================================================
+        function updateUI() {
+            // Update status bar
+            document.getElementById('totalModules').textContent = moduleRegistry.totalModules;
+            document.getElementById('completedModules').textContent = getCompletedCount();
+            document.getElementById('lastSyncTime').textContent = getLastSyncTime();
+            
+            // Render categories
+            renderCategories();
+        }
+
+        function renderCategories() {
+            const grid = document.getElementById('categoriesGrid');
+            
+            // Check if any modules were found
+            if (moduleRegistry.totalModules === 0) {
+                grid.innerHTML = `
+                    <div class="empty-state" style="grid-column: 1 / -1;">
+                        <div class="icon">📭</div>
+                        <h3>Keine Module gefunden</h3>
+                        <p>Fügen Sie HTML-Dateien in die Kategorieordner hinzu, um Module automatisch zu erkennen.</p>
+                        <div style="margin-top: 2rem; font-size: 0.9rem; color: var(--text-muted);">
+                            <p><strong>Erwartete Ordnerstruktur:</strong></p>
+                            <ul style="text-align: left; margin: 1rem 0;">
+                                <li>modules/01-notfaelle/datei.html</li>
+                                <li>modules/02-befundung/datei.html</li>
+                                <li>modules/03-differentialdiagnostik/datei.html</li>
+                                <li>...</li>
+                            </ul>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+
+            grid.innerHTML = '';
+
+            Object.entries(categories).forEach(([categoryKey, categoryInfo]) => {
+                const modules = moduleRegistry.categories[categoryKey] || [];
+                
+                const categoryCard = document.createElement('div');
+                categoryCard.className = 'category-card';
+                categoryCard.innerHTML = `
+                    <div class="category-header">
+                        <div class="category-icon">${categoryInfo.icon}</div>
+                        <div class="category-info">
+                            <h3 class="category-title">${categoryInfo.title}</h3>
+                            <p class="category-subtitle">${categoryInfo.subtitle}</p>
+                        </div>
+                        <span class="category-count">${modules.length}</span>
+                    </div>
+                    <div class="modules-list">
+                        ${modules.length === 0 ? 
+                            '<div class="empty-state"><div class="icon">📭</div><p>Noch keine Module in dieser Kategorie</p></div>' :
+                            modules.map(module => `
+                                <a href="${module.path}" class="module-item" data-module-id="${module.id}" target="_blank">
+                                    <div class="module-info">
+                                        <div class="module-title">${module.title}</div>
+                                        <div class="module-subtitle">${module.subtitle || 'Lernmodul'}</div>
+                                    </div>
+                                    <div class="module-actions">
+                                        <button class="action-btn notes-btn" onclick="event.preventDefault(); openNotes('${module.id}', '${module.title}')" title="Notizen">📝</button>
+                                        <button class="action-btn progress-btn ${getProgressStatus(module.id) === 'completed' ? 'completed' : ''}" onclick="event.preventDefault(); toggleProgress('${module.id}')" title="Fortschritt">✓</button>
+                                    </div>
+                                </a>
+                            `).join('')
+                        }
+                    </div>
+                `;
+                
+                grid.appendChild(categoryCard);
+            });
+        }
+
+        // ========================================================================================
+        // PROGRESS & NOTES MANAGEMENT
+        // ========================================================================================
+        function getCompletedCount() {
+            let count = 0;
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key.startsWith('progress_') && localStorage.getItem(key) === 'completed') {
+                    count++;
+                }
+            }
+            return count;
+        }
+
+        function getLastSyncTime() {
+            const lastSync = localStorage.getItem('lastSync');
+            if (!lastSync) return 'Nie';
+            
+            const date = new Date(parseInt(lastSync));
+            return date.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+        }
+
+        function getProgressStatus(moduleId) {
+            return localStorage.getItem(`progress_${moduleId}`) || 'not-started';
+        }
+
+        function toggleProgress(moduleId) {
+            const current = getProgressStatus(moduleId);
+            const newStatus = current === 'completed' ? 'not-started' : 'completed';
+            localStorage.setItem(`progress_${moduleId}`, newStatus);
+            
+            // Update UI
+            updateUI();
+            
+            showNotification(
+                newStatus === 'completed' ? 'Modul als abgeschlossen markiert ✓' : 'Fortschritt zurückgesetzt',
+                'success'
+            );
+        }
+
+        function openNotes(moduleId, moduleTitle) {
+            currentNoteModuleId = moduleId;
+            const modal = document.getElementById('notesModal');
+            const titleElement = document.getElementById('notesTitle');
+            const textarea = document.getElementById('notesTextarea');
+            
+            titleElement.textContent = `Notizen - ${moduleTitle}`;
+            textarea.value = localStorage.getItem(`notes_${moduleId}`) || '';
+            
+            modal.classList.add('show');
+            textarea.focus();
+        }
+
+        function closeNotes() {
+            document.getElementById('notesModal').classList.remove('show');
+            currentNoteModuleId = null;
+        }
+
+        function saveNotes() {
+            if (currentNoteModuleId) {
+                const textarea = document.getElementById('notesTextarea');
+                localStorage.setItem(`notes_${currentNoteModuleId}`, textarea.value);
+                showNotification('Notizen gespeichert! 📝', 'success');
+                closeNotes();
+            }
+        }
+
+        // ========================================================================================
+        // MANUAL CONTROLS
+        // ========================================================================================
         function createManualBackup() {
             try {
-                app.syncManager.createFullBackup();
+                const backupData = {
+                    version: '2.0',
+                    type: 'metabolic_base_backup',
+                    timestamp: new Date().toISOString(),
+                    deviceName: getDeviceName(),
+                    moduleRegistry,
+                    userData: {
+                        notes: {},
+                        progress: {},
+                        theme: localStorage.getItem('theme')
+                    }
+                };
+
+                // Collect user data
+                for (let i = 0; i < localStorage.length; i++) {
+                    const key = localStorage.key(i);
+                    if (key.startsWith('notes_')) {
+                        const moduleId = key.replace('notes_', '');
+                        backupData.userData.notes[moduleId] = localStorage.getItem(key);
+                    } else if (key.startsWith('progress_')) {
+                        const moduleId = key.replace('progress_', '');
+                        backupData.userData.progress[moduleId] = localStorage.getItem(key);
+                    }
+                }
+
+                // Create download
+                const filename = `MetabolicBase_Backup_${new Date().toISOString().split('T')[0]}.json`;
+                const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = filename;
+                a.click();
+                
+                URL.revokeObjectURL(url);
+                
+                localStorage.setItem('lastBackupDate', Date.now().toString());
                 updateControlsStatus();
+                showNotification(`Backup erstellt: ${filename}`, 'success');
+                
             } catch (error) {
                 showNotification('Backup fehlgeschlagen: ' + error.message, 'error');
             }
         }
-        
+
         async function performManualSync() {
             try {
-                await app.syncManager.manualSync();
+                showNotification('Synchronisation wird durchgeführt...', 'info');
+                
+                // Re-scan modules
+                await scanForModules();
+                updateUI();
+                
+                localStorage.setItem('lastSync', Date.now().toString());
                 updateControlsStatus();
+                showNotification('Module erfolgreich synchronisiert! 🔄', 'success');
+                
             } catch (error) {
                 showNotification('Synchronisation fehlgeschlagen: ' + error.message, 'error');
             }
         }
-        
+
         function updateControlsStatus() {
             // Backup Status
             const lastBackup = localStorage.getItem('lastBackupDate');
@@ -1040,37 +1368,117 @@
             }
         }
 
-        // Global functions for module interactions
-        function openNotes(moduleId) {
-            // Notes functionality will be implemented
-            console.log('Opening notes for:', moduleId);
+        function getDeviceName() {
+            let deviceName = localStorage.getItem('deviceName');
+            if (!deviceName) {
+                const userAgent = navigator.userAgent;
+                if (/android/i.test(userAgent)) {
+                    deviceName = 'Android-Gerät';
+                } else if (/iPad|iPhone|iPod/.test(userAgent)) {
+                    deviceName = 'iOS-Gerät';
+                } else if (/Windows/.test(userAgent)) {
+                    deviceName = 'Windows-PC';
+                } else if (/Mac/.test(userAgent)) {
+                    deviceName = 'Mac';
+                } else {
+                    deviceName = 'Unbekanntes-Gerät';
+                }
+                deviceName += '_' + Date.now().toString(36);
+                localStorage.setItem('deviceName', deviceName);
+            }
+            return deviceName;
         }
 
-        function toggleProgress(moduleId) {
-            const current = localStorage.getItem(`progress_${moduleId}`);
-            const newStatus = current === 'completed' ? 'not-started' : 'completed';
-            localStorage.setItem(`progress_${moduleId}`, newStatus);
-            
-            // Update UI
-            app.updateUI();
-            
-            showNotification(
-                newStatus === 'completed' ? 'Modul als abgeschlossen markiert ✓' : 'Fortschritt zurückgesetzt',
-                'success'
-            );
+        // ========================================================================================
+        // EVENT LISTENERS & INITIALIZATION
+        // ========================================================================================
+        function setupEventListeners() {
+            // Search functionality
+            const searchInput = document.getElementById('searchInput');
+            searchInput.addEventListener('input', (e) => {
+                clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(() => {
+                    performSearch(e.target.value);
+                }, 300); // Debounce search
+            });
+
+            // Filter buttons
+            document.getElementById('searchFilters').addEventListener('click', (e) => {
+                if (e.target.classList.contains('filter-btn')) {
+                    document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+                    e.target.classList.add('active');
+                    
+                    const category = e.target.dataset.category;
+                    // Could implement category filtering here
+                }
+            });
+
+            // Keyboard shortcuts
+            document.addEventListener('keydown', (e) => {
+                if (e.ctrlKey || e.metaKey) {
+                    if (e.key === 'k') {
+                        e.preventDefault();
+                        searchInput.focus();
+                    } else if (e.key === 'r') {
+                        e.preventDefault();
+                        performManualSync();
+                    } else if (e.key === 's') {
+                        e.preventDefault();
+                        createManualBackup();
+                    }
+                }
+                
+                if (e.key === 'Escape') {
+                    if (document.getElementById('notesModal').classList.contains('show')) {
+                        closeNotes();
+                    } else if (document.getElementById('searchResults').classList.contains('show')) {
+                        document.getElementById('searchResults').classList.remove('show');
+                        searchInput.value = '';
+                    }
+                }
+            });
+
+            // Close modal when clicking outside
+            document.getElementById('notesModal').addEventListener('click', (e) => {
+                if (e.target === e.currentTarget) {
+                    closeNotes();
+                }
+            });
         }
 
-        // Initialize app
-        let app;
-        document.addEventListener('DOMContentLoaded', async () => {
-            app = new MetabolicBase();
-            await app.init();
+        // ========================================================================================
+        // APP INITIALIZATION
+        // ========================================================================================
+        async function initializeApp() {
+            console.log('🚀 Metabolic Base wird initialisiert...');
             
-            // Update controls status after app init
-            setTimeout(updateControlsStatus, 1000);
-        });
+            try {
+                // Load theme
+                loadTheme();
+                
+                // Setup event listeners
+                setupEventListeners();
+                
+                // Scan for modules
+                await scanForModules();
+                
+                // Update UI
+                updateUI();
+                
+                // Update controls status
+                updateControlsStatus();
+                
+                showNotification('Metabolic Base erfolgreich geladen! 🎉', 'success');
+                
+            } catch (error) {
+                console.error('❌ Initialisierungsfehler:', error);
+                showNotification('Fehler beim Laden der Anwendung: ' + error.message, 'error');
+            }
+        }
 
-        // PWA Install Button
+        // ========================================================================================
+        // PWA INSTALL BUTTON
+        // ========================================================================================
         let deferredPrompt;
         window.addEventListener('beforeinstallprompt', (e) => {
             e.preventDefault();
@@ -1106,7 +1514,9 @@
             document.body.appendChild(installBtn);
         });
 
-        // Service Worker Registration
+        // ========================================================================================
+        // SERVICE WORKER REGISTRATION
+        // ========================================================================================
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('/metabolic-base/sw.js')
@@ -1118,6 +1528,11 @@
                     });
             });
         }
+
+        // ========================================================================================
+        // MAIN APP STARTUP
+        // ========================================================================================
+        document.addEventListener('DOMContentLoaded', initializeApp);
     </script>
 </body>
 </html>
