@@ -463,7 +463,94 @@
             font-size: 4rem;
             margin-bottom: var(--spacing-lg);
         }
+        /* Manual Controls */
+        .manual-controls {
+            background: var(--bg-white);
+            border-radius: var(--border-radius-lg);
+            padding: var(--spacing-xl);
+            margin-top: var(--spacing-lg);
+            box-shadow: var(--shadow-md);
+            border: 1px solid #e2e8f0;
+        }
         
+        .controls-header {
+            text-align: center;
+            margin-bottom: var(--spacing-lg);
+        }
+        
+        .controls-header h3 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: var(--spacing-xs);
+        }
+        
+        .controls-header p {
+            color: var(--text-secondary);
+            font-size: 1rem;
+        }
+        
+        .controls-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: var(--spacing-lg);
+        }
+        
+        .control-btn {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-md);
+            padding: var(--spacing-lg);
+            border: 2px solid #e2e8f0;
+            border-radius: var(--border-radius);
+            background: var(--bg-light);
+            cursor: pointer;
+            transition: var(--transition);
+            font-family: inherit;
+            width: 100%;
+        }
+        
+        .control-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-sm);
+        }
+        
+        .control-btn.warning {
+            border-color: #ff6b6b;
+            background: #ffe0e0;
+        }
+        
+        .control-btn.warning .btn-icon {
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+        
+        .btn-icon {
+            font-size: 2.5rem;
+            transition: var(--transition);
+        }
+        
+        .btn-content {
+            flex: 1;
+            text-align: left;
+        }
+        
+        .btn-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: var(--spacing-xs);
+        }
+        
+        .btn-subtitle {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
         /* Search Results */
         .search-results {
             background: var(--bg-white);
@@ -610,18 +697,18 @@
             
             <div class="search-filters" id="searchFilters">
                 <button class="filter-btn active" data-category="all">Alle</button>
-                <button class="filter-btn" data-category="notfaelle">🚨 Notfälle</button>
-                <button class="filter-btn" data-category="befundung">📊 Befundung</button>
-                <button class="filter-btn" data-category="differentialdiagnostik">🔍 Differentialdiagnostik</button>
-                <button class="filter-btn" data-category="aminosaeuren">🧬 Aminosäuren</button>
-                <button class="filter-btn" data-category="kohlenhydrate">🍯 Kohlenhydrate</button>
-                <button class="filter-btn" data-category="carnitin">🚛 Carnitin</button>
-                <button class="filter-btn" data-category="energie">⚡ Energie</button>
-                <button class="filter-btn" data-category="lipide">🫧 Lipide</button>
-                <button class="filter-btn" data-category="purin-pyrimidin">🧬 Purin/Pyrimidin</button>
-                <button class="filter-btn" data-category="lysosomal">📦 Lysosomal</button>
-                <button class="filter-btn" data-category="cdg">🔗 CDG</button>
-                <button class="filter-btn" data-category="sonstige">📚 Sonstige</button>
+                <button class="filter-btn" data-category="notfaelle">Notfälle</button>
+                <button class="filter-btn" data-category="befundung">Befundung</button>
+                <button class="filter-btn" data-category="differentialdiagnostik">Differentialdiagnostik</button>
+                <button class="filter-btn" data-category="aminosaeuren">Aminosäuren</button>
+                <button class="filter-btn" data-category="kohlenhydrate">Kohlenhydrate</button>
+                <button class="filter-btn" data-category="carnitin">Carnitin</button>
+                <button class="filter-btn" data-category="energie">Energie</button>
+                <button class="filter-btn" data-category="lipide">Lipide</button>
+                <button class="filter-btn" data-category="purin-pyrimidin">Purin/Pyrimidin</button>
+                <button class="filter-btn" data-category="lysosomal">Lysosomal</button>
+                <button class="filter-btn" data-category="cdg">CDG</button>
+                <button class="filter-btn" data-category="sonstige">Sonstige</button>
             </div>
         </section>
 
@@ -636,6 +723,32 @@
             <div class="loading">
                 <div class="spinner"></div>
             </div>
+<!-- Manual Controls Section -->
+        <section class="manual-controls">
+            <div class="controls-header">
+                <h3>🛠️ Manuelle Steuerung</h3>
+                <p>Backup und Synchronisation nur auf Knopfdruck</p>
+            </div>
+            
+            <div class="controls-grid">
+                <button id="manualBackupBtn" class="control-btn backup-btn" onclick="createManualBackup()">
+                    <div class="btn-icon">💾</div>
+                    <div class="btn-content">
+                        <div class="btn-title">Backup erstellen</div>
+                        <div class="btn-subtitle" id="backupStatus">Zuletzt: Nie</div>
+                    </div>
+                </button>
+                
+                <button id="manualSyncBtn" class="control-btn sync-btn" onclick="performManualSync()">
+                    <div class="btn-icon">🔄</div>
+                    <div class="btn-content">
+                        <div class="btn-title">Module synchronisieren</div>
+                        <div class="btn-subtitle" id="syncStatus">Zuletzt: Nie</div>
+                    </div>
+                </button>
+            </div>
+        </section>
+    </main>
         </main>
     </div>
 
@@ -711,18 +824,18 @@
                 this.syncManager = new SyncManager();
                 
                 this.categories = {
-                    'notfaelle': { title: '🚨 Notfälle', subtitle: 'Akute metabolische Krisen', icon: '🚨' },
-                    'befundung': { title: '📊 Befundung', subtitle: 'Aminosäureprofile & organische Säuren', icon: '📊' },
-                    'differentialdiagnostik': { title: '🔍 Differentialdiagnostik', subtitle: 'Systematische Abklärung', icon: '🔍' },
-                    'aminosaeuren': { title: '🧬 Aminosäurestoffwechsel', subtitle: 'Störungen im Aminosäurestoffwechsel', icon: '🧬' },
-                    'kohlenhydrate': { title: '🍯 Kohlenhydratstoffwechsel', subtitle: 'Glykogenosen & mehr', icon: '🍯' },
-                    'carnitin': { title: '🚛 Carnitinstoffwechsel', subtitle: 'Transport & Oxidation', icon: '🚛' },
-                    'energie': { title: '⚡ Energiestoffwechsel', subtitle: 'Mitochondriale & FAO-Störungen', icon: '⚡' },
-                    'lipide': { title: '🫧 Lipidstoffwechsel', subtitle: 'Fettstoffwechselstörungen', icon: '🫧' },
-                    'purin-pyrimidin': { title: '🧬 Purin/Pyrimidin', subtitle: 'Nucleotidstoffwechsel', icon: '🧬' },
-                    'lysosomal': { title: '📦 Lysosomale Störungen', subtitle: 'Speichererkrankungen', icon: '📦' },
-                    'cdg': { title: '🔗 CDG', subtitle: 'Congenital Disorders of Glycosylation', icon: '🔗' },
-                    'sonstige': { title: '📚 Sonstige IEM', subtitle: 'Weitere Stoffwechseldefekte', icon: '📚' }
+                    'notfaelle': { title: 'Notfälle', subtitle: 'Akute metabolische Krisen', icon: '🚨' },
+                    'befundung': { title: 'Befundung', subtitle: 'Aminosäureprofile & organische Säuren', icon: '📊' },
+                    'differentialdiagnostik': { title: 'Differentialdiagnostik', subtitle: 'Systematische Abklärung', icon: '🔍' },
+                    'aminosaeuren': { title: 'Aminosäurestoffwechsel', subtitle: 'Störungen im Aminosäurestoffwechsel', icon: '🧬' },
+                    'kohlenhydrate': { title: 'Kohlenhydratstoffwechsel', subtitle: 'Glykogenosen & mehr', icon: '🍯' },
+                    'carnitin': { title: 'Carnitinstoffwechsel', subtitle: 'Transport & Oxidation', icon: '🚛' },
+                    'energie': { title: 'Energiestoffwechsel', subtitle: 'Mitochondriale & FAO-Störungen', icon: '⚡' },
+                    'lipide': { title: 'Lipidstoffwechsel', subtitle: 'Fettstoffwechselstörungen', icon: '🫧' },
+                    'purin-pyrimidin': { title: 'Purin/Pyrimidin', subtitle: 'Nucleotidstoffwechsel', icon: '🧬' },
+                    'lysosomal': { title: 'Lysosomale Störungen', subtitle: 'Speichererkrankungen', icon: '📦' },
+                    'cdg': { title: 'CDG', subtitle: 'Congenital Disorders of Glycosylation', icon: '🔗' },
+                    'sonstige': { title: 'Sonstige IEM', subtitle: 'Weitere Stoffwechseldefekte', icon: '📚' }
                 };
             }
 
@@ -750,6 +863,75 @@
                 showNotification('Metabolic Base erfolgreich geladen! 🎉', 'success');
             }
 
+
+            // Manual Controls Functions
+        function createManualBackup() {
+            try {
+                app.syncManager.createFullBackup();
+                updateControlsStatus();
+            } catch (error) {
+                showNotification('Backup fehlgeschlagen: ' + error.message, 'error');
+            }
+        }
+        
+        async function performManualSync() {
+            try {
+                await app.syncManager.manualSync();
+                updateControlsStatus();
+            } catch (error) {
+                showNotification('Synchronisation fehlgeschlagen: ' + error.message, 'error');
+            }
+        }
+        
+        function updateControlsStatus() {
+            // Backup Status
+            const lastBackup = localStorage.getItem('lastBackupDate');
+            const backupBtn = document.getElementById('manualBackupBtn');
+            const backupStatus = document.getElementById('backupStatus');
+            
+            if (lastBackup) {
+                const backupDate = new Date(parseInt(lastBackup));
+                const daysSince = Math.floor((Date.now() - parseInt(lastBackup)) / (24 * 60 * 60 * 1000));
+                
+                backupStatus.textContent = `Zuletzt: ${backupDate.toLocaleDateString('de-DE')} (vor ${daysSince} Tag${daysSince !== 1 ? 'en' : ''})`;
+                
+                if (daysSince >= 7) {
+                    backupBtn.classList.add('warning');
+                } else {
+                    backupBtn.classList.remove('warning');
+                }
+            } else {
+                backupStatus.textContent = 'Zuletzt: Nie';
+                backupBtn.classList.add('warning');
+            }
+            
+            // Sync Status  
+            const lastSync = localStorage.getItem('lastSync');
+            const syncBtn = document.getElementById('manualSyncBtn');
+            const syncStatus = document.getElementById('syncStatus');
+            
+            if (lastSync) {
+                const syncDate = new Date(parseInt(lastSync));
+                const daysSince = Math.floor((Date.now() - parseInt(lastSync)) / (24 * 60 * 60 * 1000));
+                
+                syncStatus.textContent = `Zuletzt: ${syncDate.toLocaleDateString('de-DE')} (vor ${daysSince} Tag${daysSince !== 1 ? 'en' : ''})`;
+                
+                if (daysSince >= 7) {
+                    syncBtn.classList.add('warning');
+                } else {
+                    syncBtn.classList.remove('warning');
+                }
+            } else {
+                syncStatus.textContent = 'Zuletzt: Nie';
+                syncBtn.classList.add('warning');
+            }
+        }
+        
+        // Update controls status on app init
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(updateControlsStatus, 1000); // Nach App-Init
+        });
+        
             updateUI() {
                 const registry = this.autoDiscovery.getRegistry();
                 
