@@ -1,0 +1,907 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Metabolic Base - Intelligentes Lernzentrum</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#667eea">
+    <meta name="description" content="Intelligentes Lernzentrum für angeborene Stoffwechselerkrankungen mit automatischer Modulerkennung">
+    
+    <style>
+        :root {
+            --primary-color: #667eea;
+            --secondary-color: #764ba2;
+            --accent-color: #f093fb;
+            --success-color: #4facfe;
+            --warning-color: #f093fb;
+            --error-color: #ff6b6b;
+            --info-color: #74b9ff;
+            
+            --text-primary: #2d3436;
+            --text-secondary: #636e72;
+            --text-muted: #b2bec3;
+            --text-light: #ddd;
+            
+            --bg-primary: #f8fafc;
+            --bg-white: #ffffff;
+            --bg-light: #f1f3f4;
+            --bg-lighter: #e9ecef;
+            --bg-dark: #2d3436;
+            
+            --border-radius: 12px;
+            --border-radius-lg: 20px;
+            --border-radius-xl: 24px;
+            
+            --spacing-xs: 0.5rem;
+            --spacing-sm: 0.75rem;
+            --spacing-md: 1rem;
+            --spacing-lg: 1.5rem;
+            --spacing-xl: 2rem;
+            --spacing-2xl: 3rem;
+            
+            --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.04);
+            --shadow-md: 0 4px 20px rgba(0, 0, 0, 0.08);
+            --shadow-lg: 0 8px 30px rgba(0, 0, 0, 0.12);
+            --shadow-xl: 0 12px 40px rgba(0, 0, 0, 0.15);
+            
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        [data-theme="dark"] {
+            --text-primary: #f8fafc;
+            --text-secondary: #e9ecef;
+            --text-muted: #adb5bd;
+            --text-light: #6c757d;
+            
+            --bg-primary: #1a202c;
+            --bg-white: #2d3748;
+            --bg-light: #4a5568;
+            --bg-lighter: #718096;
+            --bg-dark: #f8fafc;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            transition: var(--transition);
+        }
+        
+        .app-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: var(--spacing-md);
+            min-height: 100vh;
+        }
+        
+        /* Header */
+        .header {
+            background: var(--bg-white);
+            border-radius: var(--border-radius-xl);
+            padding: var(--spacing-xl);
+            margin-bottom: var(--spacing-lg);
+            text-align: center;
+            box-shadow: var(--shadow-md);
+            border: 1px solid #e2e8f0;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color), var(--accent-color));
+            background-size: 200% 200%;
+            animation: gradientShift 4s ease-in-out infinite;
+        }
+        
+        .header h1 {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color), var(--accent-color));
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-size: clamp(2.5rem, 6vw, 4rem);
+            font-weight: 800;
+            margin-bottom: var(--spacing-sm);
+            animation: gradientShift 4s ease-in-out infinite;
+            letter-spacing: -0.02em;
+        }
+        
+        .header .subtitle {
+            color: var(--text-secondary);
+            font-size: 1.4rem;
+            font-weight: 400;
+            margin-bottom: var(--spacing-md);
+            opacity: 0.9;
+        }
+        
+        .header .badge {
+            display: inline-block;
+            background: linear-gradient(135deg, var(--info-color), var(--primary-color));
+            color: white;
+            padding: 6px 16px;
+            border-radius: 50px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-top: var(--spacing-sm);
+        }
+        
+        @keyframes gradientShift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+        
+        /* Theme Toggle */
+        .theme-toggle {
+            position: absolute;
+            top: var(--spacing-md);
+            right: var(--spacing-md);
+            background: none;
+            border: 2px solid var(--primary-color);
+            border-radius: 50px;
+            padding: 10px 20px;
+            cursor: pointer;
+            color: var(--primary-color);
+            font-size: 0.9rem;
+            font-weight: 600;
+            transition: var(--transition);
+        }
+        
+        .theme-toggle:hover {
+            background: var(--primary-color);
+            color: white;
+            transform: scale(1.05);
+        }
+        
+        /* Status Bar */
+        .status-bar {
+            background: var(--bg-white);
+            border-radius: var(--border-radius-lg);
+            padding: var(--spacing-lg);
+            margin-bottom: var(--spacing-lg);
+            box-shadow: var(--shadow-md);
+            border: 1px solid #e2e8f0;
+        }
+        
+        .status-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: var(--spacing-lg);
+        }
+        
+        .status-item {
+            text-align: center;
+            padding: var(--spacing-md);
+            background: var(--bg-light);
+            border-radius: var(--border-radius);
+            transition: var(--transition);
+        }
+        
+        .status-item:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-sm);
+        }
+        
+        .status-number {
+            font-size: 2.5rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            display: block;
+        }
+        
+        .status-label {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            font-weight: 500;
+            margin-top: var(--spacing-xs);
+        }
+        
+        /* Search Container */
+        .search-container {
+            background: var(--bg-white);
+            border-radius: var(--border-radius-lg);
+            padding: var(--spacing-lg);
+            margin-bottom: var(--spacing-lg);
+            box-shadow: var(--shadow-md);
+            border: 1px solid #e2e8f0;
+        }
+        
+        .search-box {
+            position: relative;
+            margin-bottom: var(--spacing-md);
+        }
+        
+        .search-input {
+            width: 100%;
+            padding: 20px 60px 20px 24px;
+            border: 2px solid #e2e8f0;
+            border-radius: var(--border-radius);
+            font-size: 1.2rem;
+            background: var(--bg-light);
+            color: var(--text-primary);
+            transition: var(--transition);
+        }
+        
+        .search-input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            background: var(--bg-white);
+        }
+        
+        .search-icon {
+            position: absolute;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+            font-size: 1.3rem;
+            pointer-events: none;
+        }
+        
+        .search-filters {
+            display: flex;
+            gap: var(--spacing-sm);
+            flex-wrap: wrap;
+            margin-bottom: var(--spacing-md);
+        }
+        
+        .filter-btn {
+            padding: 8px 16px;
+            border: 2px solid var(--bg-lighter);
+            border-radius: 50px;
+            background: var(--bg-light);
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: var(--transition);
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+        
+        .filter-btn.active {
+            border-color: var(--primary-color);
+            background: var(--primary-color);
+            color: white;
+        }
+        
+        .filter-btn:hover {
+            border-color: var(--primary-color);
+            transform: scale(1.02);
+        }
+        
+        /* Categories Grid */
+        .categories-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: var(--spacing-lg);
+            margin-bottom: var(--spacing-xl);
+        }
+        
+        .category-card {
+            background: var(--bg-white);
+            border-radius: var(--border-radius-lg);
+            padding: var(--spacing-lg);
+            box-shadow: var(--shadow-md);
+            border: 1px solid #e2e8f0;
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .category-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-lg);
+        }
+        
+        .category-header {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-md);
+            margin-bottom: var(--spacing-lg);
+            padding-bottom: var(--spacing-md);
+            border-bottom: 2px solid var(--bg-lighter);
+        }
+        
+        .category-icon {
+            font-size: 2rem;
+            width: 60px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            border-radius: 50%;
+            color: white;
+        }
+        
+        .category-info {
+            flex: 1;
+        }
+        
+        .category-title {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: var(--spacing-xs);
+        }
+        
+        .category-subtitle {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+        }
+        
+        .category-count {
+            background: linear-gradient(135deg, var(--info-color), var(--primary-color));
+            color: white;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+        
+        .modules-list {
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-xs);
+        }
+        
+        .module-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 18px;
+            background: var(--bg-light);
+            border-radius: var(--border-radius);
+            border: 1px solid #e2e8f0;
+            transition: var(--transition);
+            cursor: pointer;
+            text-decoration: none;
+            color: var(--text-primary);
+        }
+        
+        .module-item:hover {
+            background: var(--bg-white);
+            border-color: var(--primary-color);
+            transform: translateX(6px);
+            box-shadow: var(--shadow-sm);
+        }
+        
+        .module-info {
+            flex: 1;
+        }
+        
+        .module-title {
+            font-weight: 600;
+            margin-bottom: 4px;
+            color: var(--text-primary);
+            font-size: 1rem;
+        }
+        
+        .module-subtitle {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+        
+        .module-actions {
+            display: flex;
+            gap: var(--spacing-xs);
+        }
+        
+        .action-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            transition: var(--transition);
+        }
+        
+        .notes-btn {
+            background: linear-gradient(135deg, var(--warning-color), #fee140);
+            color: white;
+        }
+        
+        .progress-btn {
+            background: linear-gradient(135deg, var(--success-color), #00f2fe);
+            color: white;
+        }
+        
+        .action-btn:hover {
+            transform: scale(1.15);
+            box-shadow: var(--shadow-sm);
+        }
+        
+        /* Loading States */
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: var(--spacing-xl);
+        }
+        
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid var(--bg-lighter);
+            border-top: 4px solid var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: var(--spacing-2xl);
+            color: var(--text-muted);
+        }
+        
+        .empty-state .icon {
+            font-size: 4rem;
+            margin-bottom: var(--spacing-lg);
+        }
+        
+        /* Search Results */
+        .search-results {
+            background: var(--bg-white);
+            border-radius: var(--border-radius-lg);
+            padding: var(--spacing-lg);
+            margin-bottom: var(--spacing-lg);
+            box-shadow: var(--shadow-md);
+            border: 1px solid #e2e8f0;
+            display: none;
+        }
+        
+        .search-results.show {
+            display: block;
+        }
+        
+        .search-result-item {
+            padding: var(--spacing-md);
+            border-bottom: 1px solid var(--bg-lighter);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        
+        .search-result-item:hover {
+            background: var(--bg-light);
+        }
+        
+        .search-result-item:last-child {
+            border-bottom: none;
+        }
+        
+        .result-title {
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: var(--spacing-xs);
+        }
+        
+        .result-category {
+            color: var(--primary-color);
+            font-size: 0.85rem;
+            font-weight: 500;
+            margin-bottom: var(--spacing-xs);
+        }
+        
+        .result-excerpt {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            line-height: 1.4;
+        }
+        
+        .highlight {
+            background: var(--warning-color);
+            color: white;
+            padding: 2px 4px;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+        
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .app-container {
+                padding: var(--spacing-sm);
+            }
+            
+            .categories-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .search-filters {
+                justify-content: center;
+            }
+            
+            .status-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .theme-toggle {
+                position: static;
+                margin-top: var(--spacing-md);
+            }
+            
+            .header {
+                text-align: center;
+            }
+        }
+        
+        /* Accessibility */
+        @media (prefers-reduced-motion: reduce) {
+            * {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+        
+        /* Focus styles for keyboard navigation */
+        .module-item:focus,
+        .action-btn:focus,
+        .filter-btn:focus,
+        .theme-toggle:focus {
+            outline: 3px solid var(--primary-color);
+            outline-offset: 2px;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="header">
+            <button class="theme-toggle" onclick="toggleTheme()">🌙 Dark</button>
+            <h1>Metabolic Base</h1>
+            <p class="subtitle">Intelligentes Lernzentrum für Stoffwechselerkrankungen</p>
+            <span class="badge">🤖 Auto-Discovery aktiviert</span>
+        </header>
+
+        <!-- Status Bar -->
+        <section class="status-bar">
+            <div class="status-grid">
+                <div class="status-item">
+                    <span class="status-number" id="totalModules">-</span>
+                    <span class="status-label">Module gefunden</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-number" id="totalCategories">12</span>
+                    <span class="status-label">Kategorien</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-number" id="completedModules">-</span>
+                    <span class="status-label">Abgeschlossen</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-number" id="lastSyncTime">-</span>
+                    <span class="status-label">Letzte Sync</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Search Container -->
+        <section class="search-container">
+            <div class="search-box">
+                <input type="text" class="search-input" id="searchInput" 
+                       placeholder="Intelligente Suche in allen Modulen und Inhalten...">
+                <span class="search-icon">🔍</span>
+            </div>
+            
+            <div class="search-filters" id="searchFilters">
+                <button class="filter-btn active" data-category="all">Alle</button>
+                <button class="filter-btn" data-category="notfaelle">🚨 Notfälle</button>
+                <button class="filter-btn" data-category="befundung">📊 Befundung</button>
+                <button class="filter-btn" data-category="differentialdiagnostik">🔍 Differentialdiagnostik</button>
+                <button class="filter-btn" data-category="aminosaeuren">🧬 Aminosäuren</button>
+                <button class="filter-btn" data-category="kohlenhydrate">🍯 Kohlenhydrate</button>
+                <button class="filter-btn" data-category="carnitin">🚛 Carnitin</button>
+                <button class="filter-btn" data-category="energie">⚡ Energie</button>
+                <button class="filter-btn" data-category="lipide">🫧 Lipide</button>
+                <button class="filter-btn" data-category="purin-pyrimidin">🧬 Purin/Pyrimidin</button>
+                <button class="filter-btn" data-category="lysosomal">📦 Lysosomal</button>
+                <button class="filter-btn" data-category="cdg">🔗 CDG</button>
+                <button class="filter-btn" data-category="sonstige">📚 Sonstige</button>
+            </div>
+        </section>
+
+        <!-- Search Results -->
+        <section class="search-results" id="searchResults">
+            <h3>Suchergebnisse</h3>
+            <div id="searchResultsList"></div>
+        </section>
+
+        <!-- Categories Grid -->
+        <main class="categories-grid" id="categoriesGrid">
+            <div class="loading">
+                <div class="spinner"></div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/auto-discovery.js"></script>
+    <script src="js/content-indexer.js"></script>
+    <script src="js/smart-search.js"></script>
+    <script src="js/sync-manager.js"></script>
+
+    <script>
+        // Theme Management
+        function toggleTheme() {
+            const currentTheme = document.body.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            
+            document.body.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            
+            const toggleBtn = document.querySelector('.theme-toggle');
+            toggleBtn.textContent = newTheme === 'light' ? '🌙 Dark' : '☀️ Light';
+        }
+
+        function loadTheme() {
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            document.body.setAttribute('data-theme', savedTheme);
+            
+            const toggleBtn = document.querySelector('.theme-toggle');
+            toggleBtn.textContent = savedTheme === 'light' ? '🌙 Dark' : '☀️ Light';
+        }
+
+        // Notification System
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: ${type === 'success' ? '#4facfe' : type === 'error' ? '#ff6b6b' : '#74b9ff'};
+                color: white;
+                padding: 16px 24px;
+                border-radius: 12px;
+                z-index: 10000;
+                box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+                transform: translateX(100%);
+                transition: all 0.3s ease;
+                max-width: 350px;
+                font-weight: 500;
+            `;
+            
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.style.transform = 'translateX(0)';
+            }, 100);
+            
+            setTimeout(() => {
+                notification.style.transform = 'translateX(100%)';
+                setTimeout(() => {
+                    if (document.body.contains(notification)) {
+                        document.body.removeChild(notification);
+                    }
+                }, 300);
+            }, 4000);
+        }
+
+        // App Initialization
+        class MetabolicBase {
+            constructor() {
+                this.autoDiscovery = new AutoDiscovery();
+                this.contentIndexer = new ContentIndexer();
+                this.smartSearch = new SmartSearch();
+                this.syncManager = new SyncManager();
+                
+                this.categories = {
+                    'notfaelle': { title: '🚨 Notfälle', subtitle: 'Akute metabolische Krisen', icon: '🚨' },
+                    'befundung': { title: '📊 Befundung', subtitle: 'Aminosäureprofile & organische Säuren', icon: '📊' },
+                    'differentialdiagnostik': { title: '🔍 Differentialdiagnostik', subtitle: 'Systematische Abklärung', icon: '🔍' },
+                    'aminosaeuren': { title: '🧬 Aminosäurestoffwechsel', subtitle: 'Störungen im Aminosäurestoffwechsel', icon: '🧬' },
+                    'kohlenhydrate': { title: '🍯 Kohlenhydratstoffwechsel', subtitle: 'Glykogenosen & mehr', icon: '🍯' },
+                    'carnitin': { title: '🚛 Carnitinstoffwechsel', subtitle: 'Transport & Oxidation', icon: '🚛' },
+                    'energie': { title: '⚡ Energiestoffwechsel', subtitle: 'Mitochondriale & FAO-Störungen', icon: '⚡' },
+                    'lipide': { title: '🫧 Lipidstoffwechsel', subtitle: 'Fettstoffwechselstörungen', icon: '🫧' },
+                    'purin-pyrimidin': { title: '🧬 Purin/Pyrimidin', subtitle: 'Nucleotidstoffwechsel', icon: '🧬' },
+                    'lysosomal': { title: '📦 Lysosomale Störungen', subtitle: 'Speichererkrankungen', icon: '📦' },
+                    'cdg': { title: '🔗 CDG', subtitle: 'Congenital Disorders of Glycosylation', icon: '🔗' },
+                    'sonstige': { title: '📚 Sonstige IEM', subtitle: 'Weitere Stoffwechseldefekte', icon: '📚' }
+                };
+            }
+
+            async init() {
+                console.log('🚀 Metabolic Base wird initialisiert...');
+                
+                // Theme laden
+                loadTheme();
+                
+                // Auto-Discovery starten
+                await this.autoDiscovery.scanForModules();
+                
+                // Content-Indexer initialisieren
+                await this.contentIndexer.buildIndex();
+                
+                // UI aktualisieren
+                this.updateUI();
+                
+                // Event Listeners
+                this.setupEventListeners();
+                
+                // Sync-Manager starten
+                this.syncManager.init();
+                
+                showNotification('Metabolic Base erfolgreich geladen! 🎉', 'success');
+            }
+
+            updateUI() {
+                const registry = this.autoDiscovery.getRegistry();
+                
+                // Status aktualisieren
+                document.getElementById('totalModules').textContent = registry.totalModules;
+                document.getElementById('completedModules').textContent = this.getCompletedCount();
+                document.getElementById('lastSyncTime').textContent = this.getLastSyncTime();
+                
+                // Categories Grid rendern
+                this.renderCategories(registry);
+            }
+
+            renderCategories(registry) {
+                const grid = document.getElementById('categoriesGrid');
+                grid.innerHTML = '';
+
+                Object.entries(this.categories).forEach(([categoryKey, categoryInfo]) => {
+                    const modules = registry.categories[categoryKey] || [];
+                    
+                    const categoryCard = document.createElement('div');
+                    categoryCard.className = 'category-card';
+                    categoryCard.innerHTML = `
+                        <div class="category-header">
+                            <div class="category-icon">${categoryInfo.icon}</div>
+                            <div class="category-info">
+                                <h3 class="category-title">${categoryInfo.title}</h3>
+                                <p class="category-subtitle">${categoryInfo.subtitle}</p>
+                            </div>
+                            <span class="category-count">${modules.length}</span>
+                        </div>
+                        <div class="modules-list">
+                            ${modules.length === 0 ? 
+                                '<div class="empty-state"><div class="icon">📭</div><p>Noch keine Module in dieser Kategorie</p></div>' :
+                                modules.map(module => `
+                                    <a href="${module.path}" class="module-item" data-module-id="${module.id}">
+                                        <div class="module-info">
+                                            <div class="module-title">${module.title}</div>
+                                            <div class="module-subtitle">${module.subtitle || 'Lernmodul'}</div>
+                                        </div>
+                                        <div class="module-actions">
+                                            <button class="action-btn notes-btn" onclick="event.preventDefault(); openNotes('${module.id}')" title="Notizen">📝</button>
+                                            <button class="action-btn progress-btn" onclick="event.preventDefault(); toggleProgress('${module.id}')" title="Fortschritt">✓</button>
+                                        </div>
+                                    </a>
+                                `).join('')
+                            }
+                        </div>
+                    `;
+                    
+                    grid.appendChild(categoryCard);
+                });
+            }
+
+            setupEventListeners() {
+                // Search
+                const searchInput = document.getElementById('searchInput');
+                searchInput.addEventListener('input', (e) => {
+                    this.smartSearch.search(e.target.value);
+                });
+
+                // Filter buttons
+                document.getElementById('searchFilters').addEventListener('click', (e) => {
+                    if (e.target.classList.contains('filter-btn')) {
+                        document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+                        e.target.classList.add('active');
+                        
+                        const category = e.target.dataset.category;
+                        this.smartSearch.filterByCategory(category);
+                    }
+                });
+
+                // Keyboard shortcuts
+                document.addEventListener('keydown', (e) => {
+                    if (e.ctrlKey || e.metaKey) {
+                        if (e.key === 'k') {
+                            e.preventDefault();
+                            searchInput.focus();
+                        } else if (e.key === 'r') {
+                            e.preventDefault();
+                            this.refreshModules();
+                        }
+                    }
+                });
+            }
+
+            async refreshModules() {
+                showNotification('Module werden neu gescannt...', 'info');
+                await this.autoDiscovery.scanForModules();
+                await this.contentIndexer.buildIndex();
+                this.updateUI();
+                showNotification('Module aktualisiert! 🔄', 'success');
+            }
+
+            getCompletedCount() {
+                let count = 0;
+                for (let i = 0; i < localStorage.length; i++) {
+                    const key = localStorage.key(i);
+                    if (key.startsWith('progress_') && localStorage.getItem(key) === 'completed') {
+                        count++;
+                    }
+                }
+                return count;
+            }
+
+            getLastSyncTime() {
+                const lastSync = localStorage.getItem('lastSync');
+                if (!lastSync) return 'Nie';
+                
+                const date = new Date(parseInt(lastSync));
+                return date.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+            }
+        }
+
+        // Global functions for module interactions
+        function openNotes(moduleId) {
+            // Notes functionality will be implemented
+            console.log('Opening notes for:', moduleId);
+        }
+
+        function toggleProgress(moduleId) {
+            const current = localStorage.getItem(`progress_${moduleId}`);
+            const newStatus = current === 'completed' ? 'not-started' : 'completed';
+            localStorage.setItem(`progress_${moduleId}`, newStatus);
+            
+            // Update UI
+            app.updateUI();
+            
+            showNotification(
+                newStatus === 'completed' ? 'Modul als abgeschlossen markiert ✓' : 'Fortschritt zurückgesetzt',
+                'success'
+            );
+        }
+
+        // Initialize app
+        let app;
+        document.addEventListener('DOMContentLoaded', async () => {
+            app = new MetabolicBase();
+            await app.init();
+        });
+
+        // Service Worker Registration
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/metabolic-base/sw.js')
+                    .then(registration => {
+                        console.log('✅ Service Worker registriert:', registration.scope);
+                    })
+                    .catch(error => {
+                        console.error('❌ Service Worker Registrierung fehlgeschlagen:', error);
+                    });
+            });
+        }
+    </script>
+</body>
+</html>
