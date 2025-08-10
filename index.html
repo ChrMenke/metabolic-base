@@ -890,7 +890,7 @@
             await app.init();
         });
 
-        // PWA Install Button
+// PWA Install Button
 let deferredPrompt;
 window.addEventListener('beforeinstallprompt', (e) => {
     e.preventDefault();
@@ -912,7 +912,18 @@ window.addEventListener('beforeinstallprompt', (e) => {
         font-weight: 600;
     `;
     installBtn.innerHTML = '📱 App installieren';
-    // ... rest of code
+    
+    installBtn.onclick = async () => {
+        deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        if (outcome === 'accepted') {
+            installBtn.remove();
+            showNotification('App erfolgreich installiert! 🎉', 'success');
+        }
+        deferredPrompt = null;
+    };
+    
+    document.body.appendChild(installBtn);
 });
 
         // Service Worker Registration
