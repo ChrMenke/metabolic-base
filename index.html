@@ -463,6 +463,64 @@
             font-size: 4rem;
             margin-bottom: var(--spacing-lg);
         }
+
+        /* Search Results */
+        .search-results {
+            background: var(--bg-white);
+            border-radius: var(--border-radius-lg);
+            padding: var(--spacing-lg);
+            margin-bottom: var(--spacing-lg);
+            box-shadow: var(--shadow-md);
+            border: 1px solid #e2e8f0;
+            display: none;
+        }
+        
+        .search-results.show {
+            display: block;
+        }
+        
+        .search-result-item {
+            padding: var(--spacing-md);
+            border-bottom: 1px solid var(--bg-lighter);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        
+        .search-result-item:hover {
+            background: var(--bg-light);
+        }
+        
+        .search-result-item:last-child {
+            border-bottom: none;
+        }
+        
+        .result-title {
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: var(--spacing-xs);
+        }
+        
+        .result-category {
+            color: var(--primary-color);
+            font-size: 0.85rem;
+            font-weight: 500;
+            margin-bottom: var(--spacing-xs);
+        }
+        
+        .result-excerpt {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            line-height: 1.4;
+        }
+        
+        .highlight {
+            background: var(--warning-color);
+            color: white;
+            padding: 2px 4px;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+
         /* Manual Controls */
         .manual-controls {
             background: var(--bg-white);
@@ -549,63 +607,6 @@
         .btn-subtitle {
             font-size: 0.9rem;
             color: var(--text-secondary);
-        }
-
-        /* Search Results */
-        .search-results {
-            background: var(--bg-white);
-            border-radius: var(--border-radius-lg);
-            padding: var(--spacing-lg);
-            margin-bottom: var(--spacing-lg);
-            box-shadow: var(--shadow-md);
-            border: 1px solid #e2e8f0;
-            display: none;
-        }
-        
-        .search-results.show {
-            display: block;
-        }
-        
-        .search-result-item {
-            padding: var(--spacing-md);
-            border-bottom: 1px solid var(--bg-lighter);
-            cursor: pointer;
-            transition: var(--transition);
-        }
-        
-        .search-result-item:hover {
-            background: var(--bg-light);
-        }
-        
-        .search-result-item:last-child {
-            border-bottom: none;
-        }
-        
-        .result-title {
-            font-weight: 600;
-            color: var(--text-primary);
-            margin-bottom: var(--spacing-xs);
-        }
-        
-        .result-category {
-            color: var(--primary-color);
-            font-size: 0.85rem;
-            font-weight: 500;
-            margin-bottom: var(--spacing-xs);
-        }
-        
-        .result-excerpt {
-            color: var(--text-secondary);
-            font-size: 0.9rem;
-            line-height: 1.4;
-        }
-        
-        .highlight {
-            background: var(--warning-color);
-            color: white;
-            padding: 2px 4px;
-            border-radius: 4px;
-            font-weight: 600;
         }
         
         /* Responsive Design */
@@ -723,7 +724,9 @@
             <div class="loading">
                 <div class="spinner"></div>
             </div>
-<!-- Manual Controls Section -->
+        </main>
+
+        <!-- Manual Controls Section -->
         <section class="manual-controls">
             <div class="controls-header">
                 <h3>🛠️ Manuelle Steuerung</h3>
@@ -748,8 +751,6 @@
                 </button>
             </div>
         </section>
-    </main>
-        </main>
     </div>
 
     <!-- Scripts -->
@@ -863,75 +864,6 @@
                 showNotification('Metabolic Base erfolgreich geladen! 🎉', 'success');
             }
 
-
-            // Manual Controls Functions
-        function createManualBackup() {
-            try {
-                app.syncManager.createFullBackup();
-                updateControlsStatus();
-            } catch (error) {
-                showNotification('Backup fehlgeschlagen: ' + error.message, 'error');
-            }
-        }
-        
-        async function performManualSync() {
-            try {
-                await app.syncManager.manualSync();
-                updateControlsStatus();
-            } catch (error) {
-                showNotification('Synchronisation fehlgeschlagen: ' + error.message, 'error');
-            }
-        }
-        
-        function updateControlsStatus() {
-            // Backup Status
-            const lastBackup = localStorage.getItem('lastBackupDate');
-            const backupBtn = document.getElementById('manualBackupBtn');
-            const backupStatus = document.getElementById('backupStatus');
-            
-            if (lastBackup) {
-                const backupDate = new Date(parseInt(lastBackup));
-                const daysSince = Math.floor((Date.now() - parseInt(lastBackup)) / (24 * 60 * 60 * 1000));
-                
-                backupStatus.textContent = `Zuletzt: ${backupDate.toLocaleDateString('de-DE')} (vor ${daysSince} Tag${daysSince !== 1 ? 'en' : ''})`;
-                
-                if (daysSince >= 7) {
-                    backupBtn.classList.add('warning');
-                } else {
-                    backupBtn.classList.remove('warning');
-                }
-            } else {
-                backupStatus.textContent = 'Zuletzt: Nie';
-                backupBtn.classList.add('warning');
-            }
-            
-            // Sync Status  
-            const lastSync = localStorage.getItem('lastSync');
-            const syncBtn = document.getElementById('manualSyncBtn');
-            const syncStatus = document.getElementById('syncStatus');
-            
-            if (lastSync) {
-                const syncDate = new Date(parseInt(lastSync));
-                const daysSince = Math.floor((Date.now() - parseInt(lastSync)) / (24 * 60 * 60 * 1000));
-                
-                syncStatus.textContent = `Zuletzt: ${syncDate.toLocaleDateString('de-DE')} (vor ${daysSince} Tag${daysSince !== 1 ? 'en' : ''})`;
-                
-                if (daysSince >= 7) {
-                    syncBtn.classList.add('warning');
-                } else {
-                    syncBtn.classList.remove('warning');
-                }
-            } else {
-                syncStatus.textContent = 'Zuletzt: Nie';
-                syncBtn.classList.add('warning');
-            }
-        }
-        
-        // Update controls status on app init
-        document.addEventListener('DOMContentLoaded', () => {
-            setTimeout(updateControlsStatus, 1000); // Nach App-Init
-        });
-        
             updateUI() {
                 const registry = this.autoDiscovery.getRegistry();
                 
@@ -1045,6 +977,69 @@
             }
         }
 
+        // Manual Controls Functions (GLOBAL)
+        function createManualBackup() {
+            try {
+                app.syncManager.createFullBackup();
+                updateControlsStatus();
+            } catch (error) {
+                showNotification('Backup fehlgeschlagen: ' + error.message, 'error');
+            }
+        }
+        
+        async function performManualSync() {
+            try {
+                await app.syncManager.manualSync();
+                updateControlsStatus();
+            } catch (error) {
+                showNotification('Synchronisation fehlgeschlagen: ' + error.message, 'error');
+            }
+        }
+        
+        function updateControlsStatus() {
+            // Backup Status
+            const lastBackup = localStorage.getItem('lastBackupDate');
+            const backupBtn = document.getElementById('manualBackupBtn');
+            const backupStatus = document.getElementById('backupStatus');
+            
+            if (lastBackup) {
+                const backupDate = new Date(parseInt(lastBackup));
+                const daysSince = Math.floor((Date.now() - parseInt(lastBackup)) / (24 * 60 * 60 * 1000));
+                
+                backupStatus.textContent = `Zuletzt: ${backupDate.toLocaleDateString('de-DE')} (vor ${daysSince} Tag${daysSince !== 1 ? 'en' : ''})`;
+                
+                if (daysSince >= 7) {
+                    backupBtn.classList.add('warning');
+                } else {
+                    backupBtn.classList.remove('warning');
+                }
+            } else {
+                backupStatus.textContent = 'Zuletzt: Nie';
+                backupBtn.classList.add('warning');
+            }
+            
+            // Sync Status  
+            const lastSync = localStorage.getItem('lastSync');
+            const syncBtn = document.getElementById('manualSyncBtn');
+            const syncStatus = document.getElementById('syncStatus');
+            
+            if (lastSync) {
+                const syncDate = new Date(parseInt(lastSync));
+                const daysSince = Math.floor((Date.now() - parseInt(lastSync)) / (24 * 60 * 60 * 1000));
+                
+                syncStatus.textContent = `Zuletzt: ${syncDate.toLocaleDateString('de-DE')} (vor ${daysSince} Tag${daysSince !== 1 ? 'en' : ''})`;
+                
+                if (daysSince >= 7) {
+                    syncBtn.classList.add('warning');
+                } else {
+                    syncBtn.classList.remove('warning');
+                }
+            } else {
+                syncStatus.textContent = 'Zuletzt: Nie';
+                syncBtn.classList.add('warning');
+            }
+        }
+
         // Global functions for module interactions
         function openNotes(moduleId) {
             // Notes functionality will be implemented
@@ -1070,43 +1065,46 @@
         document.addEventListener('DOMContentLoaded', async () => {
             app = new MetabolicBase();
             await app.init();
+            
+            // Update controls status after app init
+            setTimeout(updateControlsStatus, 1000);
         });
 
-// PWA Install Button
-let deferredPrompt;
-window.addEventListener('beforeinstallprompt', (e) => {
-    e.preventDefault();
-    deferredPrompt = e;
+        // PWA Install Button
+        let deferredPrompt;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
 
-    const installBtn = document.createElement('button');
-    installBtn.style.cssText = `
-        position: fixed;
-        bottom: 20px;
-        left: 20px;
-        background: linear-gradient(135deg, #667eea, #764ba2);
-        color: white;
-        border: none;
-        border-radius: 50px;
-        padding: 12px 24px;
-        cursor: pointer;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-        z-index: 1000;
-        font-weight: 600;
-    `;
-    installBtn.innerHTML = '📱 App installieren';
-    
-    installBtn.onclick = async () => {
-        deferredPrompt.prompt();
-        const { outcome } = await deferredPrompt.userChoice;
-        if (outcome === 'accepted') {
-            installBtn.remove();
-            showNotification('App erfolgreich installiert! 🎉', 'success');
-        }
-        deferredPrompt = null;
-    };
-    
-    document.body.appendChild(installBtn);
-});
+            const installBtn = document.createElement('button');
+            installBtn.style.cssText = `
+                position: fixed;
+                bottom: 20px;
+                left: 20px;
+                background: linear-gradient(135deg, #667eea, #764ba2);
+                color: white;
+                border: none;
+                border-radius: 50px;
+                padding: 12px 24px;
+                cursor: pointer;
+                box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+                z-index: 1000;
+                font-weight: 600;
+            `;
+            installBtn.innerHTML = '📱 App installieren';
+            
+            installBtn.onclick = async () => {
+                deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                if (outcome === 'accepted') {
+                    installBtn.remove();
+                    showNotification('App erfolgreich installiert! 🎉', 'success');
+                }
+                deferredPrompt = null;
+            };
+            
+            document.body.appendChild(installBtn);
+        });
 
         // Service Worker Registration
         if ('serviceWorker' in navigator) {
