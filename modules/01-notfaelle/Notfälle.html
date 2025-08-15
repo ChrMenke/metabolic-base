@@ -1,0 +1,1089 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notfälle - Metabolic Emergencies</title>
+    
+    <style>
+        :root {
+            /* Hauptfarben aus metabolic_module_template */
+            --primary-color: #667eea;
+            --secondary-color: #764ba2;
+            --accent-color: #f093fb;
+            --success-color: #4facfe;
+            --warning-color: #f093fb;
+            --error-color: #ff6b6b;
+            --info-color: #74b9ff;
+            
+            /* Textfarben */
+            --text-primary: #2d3436;
+            --text-secondary: #636e72;
+            --text-muted: #b2bec3;
+            
+            /* Hintergrundfarben */
+            --bg-primary: #f8fafc;
+            --bg-white: #ffffff;
+            --bg-light: #f1f3f4;
+            --bg-lighter: #e9ecef;
+            --bg-section: #fafbfc;
+            
+            /* Layout-Variablen */
+            --border-radius: 12px;
+            --spacing-xs: 0.5rem;
+            --spacing-sm: 0.75rem;
+            --spacing-md: 1rem;
+            --spacing-lg: 1.5rem;
+            --spacing-xl: 2rem;
+            
+            --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.04);
+            --shadow-md: 0 4px 20px rgba(0, 0, 0, 0.08);
+            --shadow-lg: 0 8px 30px rgba(0, 0, 0, 0.12);
+            
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            padding: var(--spacing-md);
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: var(--bg-white);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-lg);
+            overflow: hidden;
+        }
+        
+        /* Header mit Titel */
+        .module-header {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            padding: var(--spacing-xl);
+            position: relative;
+        }
+        
+        .module-header h1 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: var(--spacing-xs);
+            letter-spacing: -0.02em;
+        }
+        
+        .module-header .subtitle {
+            font-size: 1.1rem;
+            opacity: 0.95;
+        }
+        
+        .breadcrumb {
+            position: absolute;
+            top: var(--spacing-md);
+            right: var(--spacing-md);
+            background: rgba(255, 255, 255, 0.2);
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+        }
+        
+        /* Emergency Sections */
+        .emergency-sections {
+            padding: var(--spacing-lg);
+        }
+        
+        .emergency-item {
+            background: var(--bg-light);
+            border: 2px solid var(--primary-color);
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            transition: var(--transition);
+            margin-bottom: var(--spacing-md);
+        }
+        
+        .emergency-item:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+        
+        .emergency-header {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            padding: var(--spacing-md) var(--spacing-lg);
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 600;
+            font-size: 1.1rem;
+            user-select: none;
+            transition: var(--transition);
+        }
+        
+        .emergency-header:hover {
+            background: linear-gradient(135deg, var(--secondary-color), var(--primary-color));
+        }
+        
+        .emergency-title {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+        }
+        
+        .emergency-icon {
+            font-size: 1.3rem;
+        }
+        
+        .collapse-icon {
+            transition: transform 0.3s ease;
+            font-size: 1.2rem;
+        }
+        
+        .emergency-item.active .collapse-icon {
+            transform: rotate(180deg);
+        }
+        
+        .emergency-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+        
+        .emergency-item.active .emergency-content {
+            max-height: 2000px;
+        }
+        
+        .emergency-details {
+            padding: var(--spacing-lg);
+        }
+        
+        .detail-section {
+            margin-bottom: var(--spacing-lg);
+        }
+        
+        .detail-section:last-child {
+            margin-bottom: 0;
+        }
+        
+        .detail-title {
+            color: var(--primary-color);
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: var(--spacing-sm);
+            padding-bottom: var(--spacing-xs);
+            border-bottom: 2px solid var(--bg-lighter);
+        }
+        
+        .detail-content {
+            color: var(--text-secondary);
+            line-height: 1.7;
+        }
+        
+        .detail-content ul {
+            margin-left: var(--spacing-lg);
+            margin-top: var(--spacing-sm);
+        }
+        
+        .detail-content li {
+            margin-bottom: var(--spacing-xs);
+        }
+        
+        /* Checkbox Styling */
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: var(--spacing-xs);
+            padding: 4px 0;
+            transition: var(--transition);
+        }
+        
+        .checkbox-item:hover {
+            background: rgba(102, 126, 234, 0.05);
+            border-radius: 4px;
+            padding-left: 4px;
+        }
+        
+        .checkbox-item input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            margin-right: var(--spacing-sm);
+            cursor: pointer;
+            accent-color: var(--primary-color);
+        }
+        
+        .checkbox-label {
+            cursor: pointer;
+            transition: var(--transition);
+            flex: 1;
+            line-height: 1.5;
+        }
+        
+        .checkbox-item input[type="checkbox"]:checked + .checkbox-label {
+            text-decoration: line-through;
+            color: var(--text-muted);
+            opacity: 0.7;
+        }
+        
+        .checkbox-item input[type="checkbox"]:checked + .checkbox-label::after {
+            content: " ✓";
+            color: var(--success-color);
+            font-weight: bold;
+        }
+        
+        /* Spezielle Hervorhebungen */
+        .warning-box {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: var(--spacing-md);
+            border-radius: 0 var(--border-radius) var(--border-radius) 0;
+            margin: var(--spacing-md) 0;
+        }
+        
+        .info-box {
+            background: #d1ecf1;
+            border-left: 4px solid #17a2b8;
+            padding: var(--spacing-md);
+            border-radius: 0 var(--border-radius) var(--border-radius) 0;
+            margin: var(--spacing-md) 0;
+        }
+        
+        .danger-box {
+            background: #f8d7da;
+            border-left: 4px solid #dc3545;
+            padding: var(--spacing-md);
+            border-radius: 0 var(--border-radius) var(--border-radius) 0;
+            margin: var(--spacing-md) 0;
+        }
+        
+        /* DD Schema Styling */
+        .dd-schema {
+            background: var(--bg-section);
+            border: 1px solid var(--bg-lighter);
+            border-radius: var(--border-radius);
+            padding: var(--spacing-md);
+            margin: var(--spacing-md) 0;
+        }
+        
+        .dd-branch {
+            margin: var(--spacing-sm) 0;
+            padding: var(--spacing-sm);
+            border-left: 3px solid var(--info-color);
+            background: rgba(116, 185, 255, 0.1);
+        }
+        
+        .dd-branch-subtle {
+            margin: var(--spacing-sm) 0;
+            padding: var(--spacing-sm);
+            border-left: 2px solid var(--text-muted);
+            background: rgba(0, 0, 0, 0.02);
+        }
+        
+        .dd-subbranch {
+            margin-left: var(--spacing-lg);
+            margin-top: var(--spacing-xs);
+            padding: var(--spacing-xs);
+            border-left: 2px solid var(--accent-color);
+            background: rgba(240, 147, 251, 0.1);
+        }
+        
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: var(--spacing-md) 0;
+        }
+        
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        
+        th {
+            background: var(--primary-color);
+            color: white;
+            font-weight: 600;
+        }
+        
+        /* Navigation Footer */
+        .module-footer {
+            background: var(--bg-light);
+            padding: var(--spacing-lg);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-top: 1px solid var(--bg-lighter);
+        }
+        
+        .nav-button {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: var(--spacing-sm) var(--spacing-lg);
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-weight: 600;
+            transition: var(--transition);
+            text-decoration: none;
+            display: inline-block;
+        }
+        
+        .nav-button:hover {
+            background: var(--secondary-color);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-sm);
+        }
+        
+        .nav-button:disabled {
+            background: var(--bg-lighter);
+            color: var(--text-muted);
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        /* Progress Bar */
+        .progress-bar {
+            height: 4px;
+            background: var(--bg-lighter);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+            width: 20%;
+            transition: width 0.3s ease;
+        }
+        
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .module-header h1 {
+                font-size: 1.8rem;
+            }
+            
+            .emergency-sections {
+                padding: var(--spacing-md);
+            }
+            
+            .breadcrumb {
+                display: none;
+            }
+            
+            .emergency-header {
+                font-size: 1rem;
+                padding: var(--spacing-md);
+            }
+        }
+        
+        /* Print Styles */
+        @media print {
+            body {
+                background: white;
+                padding: 0;
+            }
+            
+            .container {
+                box-shadow: none;
+            }
+            
+            .emergency-header,
+            .module-footer {
+                display: none;
+            }
+            
+            .emergency-content {
+                max-height: none !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Progress Bar -->
+    <div class="progress-bar">
+        <div class="progress-fill"></div>
+    </div>
+
+    <div class="container">
+        <!-- Header -->
+        <header class="module-header">
+            <div class="breadcrumb">Metabolic > Notfälle</div>
+            <h1>🚨 Notfälle</h1>
+            <p class="subtitle">Akute metabolische Notfallsituationen - Diagnostik und Management</p>
+        </header>
+
+        <!-- Emergency Sections -->
+        <section class="emergency-sections">
+            
+            <!-- Basisdiagnostik -->
+            <div class="emergency-item" id="basisdiagnostik">
+                <div class="emergency-header" onclick="toggleEmergency('basisdiagnostik')">
+                    <div class="emergency-title">
+                        <span class="emergency-icon">📋</span>
+                        <span>Basisdiagnostik</span>
+                    </div>
+                    <span class="collapse-icon">▼</span>
+                </div>
+                <div class="emergency-content">
+                    <div class="emergency-details">
+                        <div class="detail-section">
+                            <div class="detail-title">Sofortdiagnostik</div>
+                            <div class="detail-content">
+                                <div class="checkbox-item">
+                                    <input type="checkbox" id="basis_bga" onchange="saveCheckState(this)">
+                                    <label class="checkbox-label" for="basis_bga">BGA (incl. Laktat und BZ)</label>
+                                </div>
+                                <div class="checkbox-item">
+                                    <input type="checkbox" id="basis_ammoniak" onchange="saveCheckState(this)">
+                                    <label class="checkbox-label" for="basis_ammoniak">Ammoniak</label>
+                                </div>
+                                <div class="checkbox-item">
+                                    <input type="checkbox" id="basis_ketone" onchange="saveCheckState(this)">
+                                    <label class="checkbox-label" for="basis_ketone">Ketone</label>
+                                </div>
+                                
+                                <!-- Metabolische Azidose Info -->
+                                <div class="info-box" style="margin-top: 1rem;">
+                                    <strong>🔍 Bei metabolischer Azidose:</strong> Verwende IMD Diagnostic Algorithm (siehe externe Tabelle)
+                                    <br><small>Abkürzungen: Glu: Blood glucose; Lact: lactate; N: normal; Ket: ketones; AG: anion gap; NH3: blood ammonia level</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Glucose Infusion -->
+            <div class="emergency-item" id="glucoseinfusion">
+                <div class="emergency-header" onclick="toggleEmergency('glucoseinfusion')">
+                    <div class="emergency-title">
+                        <span class="emergency-icon">💉</span>
+                        <span>Glucose Infusion</span>
+                    </div>
+                    <span class="collapse-icon">▼</span>
+                </div>
+                <div class="emergency-content">
+                    <div class="emergency-details">
+                        <div class="detail-section">
+                            <div class="detail-title">Glucose-Infusion über peripheren Zugang</div>
+                            <div class="detail-content">
+                                <p>Während des Wartens auf zentralen Zugang: 10% Glucose (G10% oder D10W) + 6 g/L NaCl und KCl je nach Serumkaliumspiegel (nie pures G10%: Risiko von Hirnödem)</p>
+                                
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>Alter</th>
+                                            <th>0-24 Monate</th>
+                                            <th>2-4 Jahre</th>
+                                            <th>4-14 Jahre</th>
+                                            <th>>14 Jahre/Erwachsene</th>
+                                            <th>MAX. FLOW RATE</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td><strong>G10% + added electrolytes*</strong></td>
+                                            <td>6mL/kg/hr<br>(10mg/kg/min)</td>
+                                            <td>5mL/kg/hr<br>(8mg/kg/min)</td>
+                                            <td>3.5mL/kg/hr<br>(6mg/kg/min)</td>
+                                            <td>2.5mL/kg/hr<br>(4mg/kg/min)</td>
+                                            <td>120mL/hr<br>(3L/24 hrs)</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                                
+                                <h4>Routine Vitamin-Therapie</h4>
+                                <ul>
+                                    <li><strong>Vitamin B1 (Thiamin):</strong> 250 mg/Tag oral oder IV (1g für Erwachsene)</li>
+                                    <li><strong>Vitamin B12 (Cyanocobalamin):</strong> 1 mg/Tag oral</li>
+                                    <li><strong>Vitamin B2 (Riboflavin):</strong> 50 mg/Tag oral</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Hypoglykämie -->
+            <div class="emergency-item" id="hypoglykämie">
+                <div class="emergency-header" onclick="toggleEmergency('hypoglykämie')">
+                    <div class="emergency-title">
+                        <span class="emergency-icon">⬇️</span>
+                        <span>Hypoglykämie</span>
+                    </div>
+                    <span class="collapse-icon">▼</span>
+                </div>
+                <div class="emergency-content">
+                    <div class="emergency-details">
+                        <div class="detail-section">
+                            <div class="detail-title">Definition</div>
+                            <div class="detail-content">
+                                <div class="warning-box">
+                                    <strong>Hypoglykämie-Definitionen:</strong>
+                                    <ul>
+                                        <li><strong>&lt; 2,6 mmol/l</strong> ohne Symptome</li>
+                                        <li><strong>&lt; 3,9 mmol/l</strong> mit Symptomen</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="detail-section">
+                            <div class="detail-title">Labor</div>
+                            <div class="detail-content">
+                                <div class="checkbox-item">
+                                    <input type="checkbox" id="hypo_acylcarnitin" onchange="saveCheckState(this)">
+                                    <label class="checkbox-label" for="hypo_acylcarnitin">Acylcarnitin + freies Carnitin</label>
+                                </div>
+                                <div class="checkbox-item">
+                                    <input type="checkbox" id="hypo_insulin" onchange="saveCheckState(this)">
+                                    <label class="checkbox-label" for="hypo_insulin">Insulin + C-Peptid</label>
+                                </div>
+                                <div class="checkbox-item">
+                                    <input type="checkbox" id="hypo_bga" onchange="saveCheckState(this)">
+                                    <label class="checkbox-label" for="hypo_bga">BGA</label>
+                                </div>
+                                <div class="checkbox-item">
+                                    <input type="checkbox" id="hypo_freie_fs" onchange="saveCheckState(this)">
+                                    <label class="checkbox-label" for="hypo_freie_fs">Freie Fettsäuren</label>
+                                </div>
+                                <div class="checkbox-item">
+                                    <input type="checkbox" id="hypo_3hydroxy" onchange="saveCheckState(this)">
+                                    <label class="checkbox-label" for="hypo_3hydroxy">3-Hydroxybutyrat</label>
+                                </div>
+                                <div class="checkbox-item">
+                                    <input type="checkbox" id="hypo_org_saeure" onchange="saveCheckState(this)">
+                                    <label class="checkbox-label" for="hypo_org_saeure">Organische Säuren im Urin</label>
+                                </div>
+                                <div class="checkbox-item">
+                                    <input type="checkbox" id="hypo_ck_harnsaeure" onchange="saveCheckState(this)">
+                                    <label class="checkbox-label" for="hypo_ck_harnsaeure">CK + Harnsäure + Triglyceride + Wachstumshormon</label>
+                                </div>
+                                <div class="checkbox-item">
+                                    <input type="checkbox" id="hypo_retention" onchange="saveCheckState(this)">
+                                    <label class="checkbox-label" for="hypo_retention">Retentionsparameter + Transaminasen</label>
+                                </div>
+                                <div class="checkbox-item">
+                                    <input type="checkbox" id="hypo_ammoniak" onchange="saveCheckState(this)">
+                                    <label class="checkbox-label" for="hypo_ammoniak">Ammoniak</label>
+                                </div>
+                                <div class="checkbox-item">
+                                    <input type="checkbox" id="hypo_aminosaeure" onchange="saveCheckState(this)">
+                                    <label class="checkbox-label" for="hypo_aminosaeure">Aminosäuren im Plasma</label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="detail-section">
+                            <div class="detail-title">Differentialdiagnosen</div>
+                            <div class="detail-content">
+                                <div class="dd-schema">
+                                    <div class="dd-branch">
+                                        <strong>Ketone-abhängige Differenzierung:</strong>
+                                        
+                                        <div class="dd-subbranch">
+                                            <strong>a) Ketone niedrig oder normal und freie Fettsäuren:</strong><br>
+                                            • niedrig = Hyperinsulinismus<br>
+                                            • erhöht = Beta-Oxidation oder Ketolyse-Defekt
+                                        </div>
+                                        
+                                        <div class="dd-subbranch">
+                                            <strong>b) Ketone erhöht</strong> = Organoazidurien, Atmungskettendefekte, Beta-Oxidation langkettiger Fettsäuren
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="dd-branch">
+                                        <strong>c) Lactaterhöhung und:</strong>
+                                        <div class="dd-subbranch">
+                                            <strong>1) keine Hepatomegalie</strong> = Organoazidurien, Ketolysedefekte, LCHAD, VLCAD
+                                        </div>
+                                        <div class="dd-subbranch">
+                                            <strong>2) Hepatomegalie</strong> = Glykogenosen, Störungen der Glukoneogenese
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Hyperammonämie -->
+            <div class="emergency-item" id="hyperammonaemie">
+                <div class="emergency-header" onclick="toggleEmergency('hyperammonaemie')">
+                    <div class="emergency-title">
+                        <span class="emergency-icon">⬆️</span>
+                        <span>Hyperammonämie</span>
+                    </div>
+                    <span class="collapse-icon">▼</span>
+                </div>
+                <div class="emergency-content">
+                    <div class="emergency-details">
+                        <div class="detail-section">
+                            <div class="detail-title">Extrakorporale Verfahren</div>
+                            <div class="detail-content">
+                                <div class="danger-box">
+                                    <strong>Indikation: Ammoniak 250 - 500 µmol/l</strong>
+                                    <p>Hämodialyse, Hämofiltration oder Peritonealdialyse erwägen</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="detail-section">
+                            <div class="detail-title">Definition</div>
+                            <div class="detail-content">
+                                <div class="warning-box">
+                                    <strong>Grenzwerte:</strong>
+                                    <ul>
+                                        <li><strong>Pathologisch ab 100 µmol/l</strong></li>
+                                        <li><strong>Bei kranken Kindern ab 200 µmol/l</strong></li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="detail-section">
+                            <div class="detail-title">Differentialdiagnosen</div>
+                            <div class="detail-content">
+                                <div class="dd-schema">
+                                    <div class="dd-branch-subtle">
+                                        <strong>Harnstoffzyklusdefekte (Glutamin erhöht):</strong>
+                                        <div class="dd-subbranch">
+                                            <strong>a) Citrullin niedrig:</strong> OTC/CPS1
+                                        </div>
+                                        <div class="dd-subbranch">
+                                            <strong>b) Citrullin erhöht:</strong> ASL/ASL1
+                                        </div>
+                                        <div class="dd-subbranch">
+                                            <strong>c) Ornithin erhöht:</strong> HHH
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="dd-branch">
+                                        <strong>Organoazidurien (Glutamin normal)</strong>
+                                    </div>
+                                    
+                                    <div class="dd-branch">
+                                        <strong>HIHA</strong>
+                                    </div>
+                                    
+                                    <div class="dd-branch">
+                                        <strong>Leberversagen</strong>
+                                    </div>
+                                    
+                                    <div class="dd-branch">
+                                        <strong>Transiente Hyperammonämie bei offenem D. arantii</strong>
+                                    </div>
+                                    
+                                    <div class="dd-branch">
+                                        <strong>Medikamentös</strong>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="detail-section">
+                            <div class="detail-title">Untersuchung</div>
+                            <div class="detail-content">
+                                <div class="checkbox-item">
+                                    <input type="checkbox" id="hyper_ammoniak" onchange="saveCheckState(this)">
+                                    <label class="checkbox-label" for="hyper_ammoniak">Ammoniak</label>
+                                </div>
+                                <div class="checkbox-item">
+                                    <input type="checkbox" id="hyper_acylcarnitin" onchange="saveCheckState(this)">
+                                    <label class="checkbox-label" for="hyper_acylcarnitin">Acylcarnitine + freies Carnitin</label>
+                                </div>
+                                <div class="checkbox-item">
+                                    <input type="checkbox" id="hyper_amino" onchange="saveCheckState(this)">
+                                    <label class="checkbox-label" for="hyper_amino">Aminosäuren im Plasma</label>
+                                </div>
+                                <div class="checkbox-item">
+                                    <input type="checkbox" id="hyper_orotsaeure" onchange="saveCheckState(this)">
+                                    <label class="checkbox-label" for="hyper_orotsaeure">Orotsäure im Urin</label>
+                                </div>
+                                <div class="checkbox-item">
+                                    <input type="checkbox" id="hyper_leber" onchange="saveCheckState(this)">
+                                    <label class="checkbox-label" for="hyper_leber">Leberfunktion</label>
+                                </div>
+                                <div class="checkbox-item">
+                                    <input type="checkbox" id="hyper_org" onchange="saveCheckState(this)">
+                                    <label class="checkbox-label" for="hyper_org">Organische Säuren+</label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="detail-section">
+                            <div class="detail-title">Therapie (Vademecum S. 13)</div>
+                            <div class="detail-content">
+                                <div class="danger-box">
+                                    <strong>BOLUS über 1,5 - 2 h:</strong>
+                                    <ul>
+                                        <li><strong>L-Arginin:</strong> 2 mmol/kg i.v. (=420 mg/kg)</li>
+                                        <li><strong>Natrium-Benzoat:</strong> 250 mg/kg i.v.</li>
+                                        <li><strong>L-Carnitin:</strong> 100 mg/kg i.v. (NICHT bei V.a. Oxidationsstörung langkettiger FS)</li>
+                                    </ul>
+                                </div>
+                                
+                                <div class="info-box">
+                                    <strong>Angaben über 24h:</strong>
+                                    <ul>
+                                        <li><strong>Glucose-Infusion</strong> (s.o.)</li>
+                                        <li><strong>L-Arginin 21%:</strong> 2 mmol/kg/d (Ziel: Arg 80 - 150 µmol/l)</li>
+                                        <li><strong>Na-Benzoat:</strong> 250 - 500 mg/kg/d</li>
+                                        <li><strong>L-Carnitin:</strong> 100 mg/kg/d</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Lactaterhöhung -->
+            <div class="emergency-item" id="lactaterhöhung">
+                <div class="emergency-header" onclick="toggleEmergency('lactaterhöhung')">
+                    <div class="emergency-title">
+                        <span class="emergency-icon">📈</span>
+                        <span>Lactaterhöhung</span>
+                    </div>
+                    <span class="collapse-icon">▼</span>
+                </div>
+                <div class="emergency-content">
+                    <div class="emergency-details">
+                        <div class="detail-section">
+                            <div class="detail-title">Differentialdiagnosen</div>
+                            <div class="detail-content">
+                                <div class="dd-schema">
+                                    <div class="dd-branch">
+                                        <strong>Störungen Atmungskette + Citratzyklus</strong>
+                                    </div>
+                                    
+                                    <div class="dd-branch">
+                                        <strong>PDH/PC Mangel</strong>
+                                    </div>
+                                    
+                                    <div class="dd-branch">
+                                        <strong>Beta-Oxidation langkettiger Fettsäuren</strong>
+                                    </div>
+                                    
+                                    <div class="dd-branch">
+                                        <strong>Organoazidurien / Biotinstoffwechsel</strong>
+                                    </div>
+                                    
+                                    <div class="dd-branch">
+                                        <strong>Glykogenosen, Störungen Glukoneogenese</strong>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="detail-section">
+                            <div class="detail-title">Labor</div>
+                            <div class="detail-content">
+                                <div class="checkbox-item">
+                                    <input type="checkbox" id="lactat_acylcarnitin" onchange="saveCheckState(this)">
+                                    <label class="checkbox-label" for="lactat_acylcarnitin">Acylcarnitine</label>
+                                </div>
+                                <div class="checkbox-item">
+                                    <input type="checkbox" id="lactat_ratio" onchange="saveCheckState(this)">
+                                    <label class="checkbox-label" for="lactat_ratio">Laktat/Pyruvat-Ratio</label>
+                                </div>
+                                <div class="checkbox-item">
+                                    <input type="checkbox" id="lactat_amino" onchange="saveCheckState(this)">
+                                    <label class="checkbox-label" for="lactat_amino">Aminosäuren</label>
+                                </div>
+                                <div class="checkbox-item">
+                                    <input type="checkbox" id="lactat_org" onchange="saveCheckState(this)">
+                                    <label class="checkbox-label" for="lactat_org">Organische Säuren</label>
+                                </div>
+                                <div class="checkbox-item">
+                                    <input type="checkbox" id="lactat_ketone" onchange="saveCheckState(this)">
+                                    <label class="checkbox-label" for="lactat_ketone">Ketone</label>
+                                </div>
+                                <div class="checkbox-item">
+                                    <input type="checkbox" id="lactat_ck" onchange="saveCheckState(this)">
+                                    <label class="checkbox-label" for="lactat_ck">CK, LDH</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Floppy Infant -->
+            <div class="emergency-item" id="floppyinfant">
+                <div class="emergency-header" onclick="toggleEmergency('floppyinfant')">
+                    <div class="emergency-title">
+                        <span class="emergency-icon">👶</span>
+                        <span>Floppy Infant</span>
+                    </div>
+                    <span class="collapse-icon">▼</span>
+                </div>
+                <div class="emergency-content">
+                    <div class="emergency-details">
+                        <div class="detail-section">
+                            <div class="detail-title">Differentialdiagnosen</div>
+                            <div class="detail-content">
+                                [Metabolische DD des Floppy Infant]
+                                <ul>
+                                    <li>Mitochondriale Myopathien</li>
+                                    <li>Glykogenose Typ II (Pompe)</li>
+                                    <li>Lipidspeicherkrankheiten</li>
+                                    <li>Peroxisomale Erkrankungen</li>
+                                    <li>Organische Azidämien</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="detail-section">
+                            <div class="detail-title">Labor</div>
+                            <div class="detail-content">
+                                [Diagnostisches Vorgehen]
+                                <div class="checkbox-item">
+                                    <input type="checkbox" id="floppy_ck" onchange="saveCheckState(this)">
+                                    <label class="checkbox-label" for="floppy_ck">CK, LDH, Aldolase</label>
+                                </div>
+                                <div class="checkbox-item">
+                                    <input type="checkbox" id="floppy_laktat" onchange="saveCheckState(this)">
+                                    <label class="checkbox-label" for="floppy_laktat">Laktat</label>
+                                </div>
+                                <div class="checkbox-item">
+                                    <input type="checkbox" id="floppy_amino" onchange="saveCheckState(this)">
+                                    <label class="checkbox-label" for="floppy_amino">Aminosäuren</label>
+                                </div>
+                                <div class="checkbox-item">
+                                    <input type="checkbox" id="floppy_org" onchange="saveCheckState(this)">
+                                    <label class="checkbox-label" for="floppy_org">Organische Säuren</label>
+                                </div>
+                                <div class="checkbox-item">
+                                    <input type="checkbox" id="floppy_pompe" onchange="saveCheckState(this)">
+                                    <label class="checkbox-label" for="floppy_pompe">α-Glucosidase (Pompe)</label>
+                                </div>
+                                <div class="checkbox-item">
+                                    <input type="checkbox" id="floppy_vlcfa" onchange="saveCheckState(this)">
+                                    <label class="checkbox-label" for="floppy_vlcfa">Sehr langkettige Fettsäuren</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Belastungsintoleranz -->
+            <div class="emergency-item" id="belastungsintoleranz">
+                <div class="emergency-header" onclick="toggleEmergency('belastungsintoleranz')">
+                    <div class="emergency-title">
+                        <span class="emergency-icon">🏃‍♂️</span>
+                        <span>Belastungsintoleranz</span>
+                    </div>
+                    <span class="collapse-icon">▼</span>
+                </div>
+                <div class="emergency-content">
+                    <div class="emergency-details">
+                        <div class="detail-section">
+                            <div class="detail-title">Differentialdiagnosen</div>
+                            <div class="detail-content">
+                                [DD der Belastungsintoleranz]
+                                <ul>
+                                    <li>Mitochondriale Erkrankungen</li>
+                                    <li>Glykogenosen</li>
+                                    <li>Fettsäureoxidationsdefekte</li>
+                                    <li>McArdle-Krankheit</li>
+                                    <li>Kardiomyopathien</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="detail-section">
+                            <div class="detail-title">Labor</div>
+                            <div class="detail-content">
+                                [Belastungsdiagnostik]
+                                <div class="checkbox-item">
+                                    <input type="checkbox" id="belast_ck" onchange="saveCheckState(this)">
+                                    <label class="checkbox-label" for="belast_ck">CK vor/nach Belastung</label>
+                                </div>
+                                <div class="checkbox-item">
+                                    <input type="checkbox" id="belast_laktat" onchange="saveCheckState(this)">
+                                    <label class="checkbox-label" for="belast_laktat">Laktat unter Belastung</label>
+                                </div>
+                                <div class="checkbox-item">
+                                    <input type="checkbox" id="belast_ammoniak" onchange="saveCheckState(this)">
+                                    <label class="checkbox-label" for="belast_ammoniak">Ammoniak-Test</label>
+                                </div>
+                                <div class="checkbox-item">
+                                    <input type="checkbox" id="belast_carnitin" onchange="saveCheckState(this)">
+                                    <label class="checkbox-label" for="belast_carnitin">Carnitin/Acylcarnitine</label>
+                                </div>
+                                <div class="checkbox-item">
+                                    <input type="checkbox" id="belast_myoglobin" onchange="saveCheckState(this)">
+                                    <label class="checkbox-label" for="belast_myoglobin">Myoglobin</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Kardiomyopathie -->
+            <div class="emergency-item" id="kardiomyopathie">
+                <div class="emergency-header" onclick="toggleEmergency('kardiomyopathie')">
+                    <div class="emergency-title">
+                        <span class="emergency-icon">❤️</span>
+                        <span>Kardiomyopathie</span>
+                    </div>
+                    <span class="collapse-icon">▼</span>
+                </div>
+                <div class="emergency-content">
+                    <div class="emergency-details">
+                        <div class="detail-section">
+                            <div class="detail-title">Differentialdiagnosen</div>
+                            <div class="detail-content">
+                                [Metabolische DD der Kardiomyopathie]
+                                <ul>
+                                    <li>Pompe-Krankheit</li>
+                                    <li>Fettsäureoxidationsdefekte</li>
+                                    <li>Mitochondriale Kardiomyopathien</li>
+                                    <li>Danon-Krankheit</li>
+                                    <li>Barth-Syndrom</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="detail-section">
+                            <div class="detail-title">Labor</div>
+                            <div class="detail-content">
+                                [Kardiometabolische Diagnostik]
+                                <div class="checkbox-item">
+                                    <input type="checkbox" id="kardio_pompe" onchange="saveCheckState(this)">
+                                    <label class="checkbox-label" for="kardio_pompe">α-Glucosidase (Pompe)</label>
+                                </div>
+                                <div class="checkbox-item">
+                                    <input type="checkbox" id="kardio_carnitin" onchange="saveCheckState(this)">
+                                    <label class="checkbox-label" for="kardio_carnitin">Carnitin/Acylcarnitine</label>
+                                </div>
+                                <div class="checkbox-item">
+                                    <input type="checkbox" id="kardio_cardiolipin" onchange="saveCheckState(this)">
+                                    <label class="checkbox-label" for="kardio_cardiolipin">Cardiolipin</label>
+                                </div>
+                                <div class="checkbox-item">
+                                    <input type="checkbox" id="kardio_ck" onchange="saveCheckState(this)">
+                                    <label class="checkbox-label" for="kardio_ck">CK-MB, Troponin</label>
+                                </div>
+                                <div class="checkbox-item">
+                                    <input type="checkbox" id="kardio_bnp" onchange="saveCheckState(this)">
+                                    <label class="checkbox-label" for="kardio_bnp">BNP/NT-proBNP</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </section>
+
+        <!-- Footer Navigation -->
+        <footer class="module-footer">
+            <button class="nav-button" onclick="previousModule()">← Vorheriges Modul</button>
+            <span>Notfälle Modul</span>
+            <button class="nav-button" onclick="nextModule()">Nächstes Modul →</button>
+        </footer>
+    </div>
+
+    <script>
+        // ========================================
+        // Emergency Item Toggle Functionality
+        // ========================================
+        function toggleEmergency(itemId) {
+            const item = document.getElementById(itemId);
+            item.classList.toggle('active');
+            
+            // Speichere Zustand
+            const isActive = item.classList.contains('active');
+            localStorage.setItem(`emergency_${itemId}`, isActive);
+        }
+
+        // ========================================
+        // Checkbox State Management
+        // ========================================
+        function saveCheckState(checkbox) {
+            const moduleId = 'notfaelle';
+            const checkboxStates = JSON.parse(localStorage.getItem(`checkboxStates_${moduleId}`) || '{}');
+            
+            // Speichere den aktuellen Zustand
+            checkboxStates[checkbox.id] = checkbox.checked;
+            
+            // Speichere zurück in localStorage
+            localStorage.setItem(`checkboxStates_${moduleId}`, JSON.stringify(checkboxStates));
+        }
+
+        // ========================================
+        // Load saved states on page load
+        // ========================================
+        document.addEventListener('DOMContentLoaded', function() {
+            // Load emergency item states
+            const emergencyItems = ['basisdiagnostik', 'glucoseinfusion', 'hypoglykämie', 'hyperammonaemie', 'lactaterhöhung', 'floppyinfant', 'belastungsintoleranz', 'kardiomyopathie'];
+            
+            emergencyItems.forEach(itemId => {
+                const saved = localStorage.getItem(`emergency_${itemId}`);
+                if (saved === 'true') {
+                    document.getElementById(itemId).classList.add('active');
+                }
+            });
+
+            // Load checkbox states
+            const moduleId = 'notfaelle';
+            const checkboxStates = JSON.parse(localStorage.getItem(`checkboxStates_${moduleId}`) || '{}');
+            
+            Object.keys(checkboxStates).forEach(checkboxId => {
+                const checkbox = document.getElementById(checkboxId);
+                if (checkbox) {
+                    checkbox.checked = checkboxStates[checkboxId];
+                }
+            });
+        });
+
+        // ========================================
+        // Navigation
+        // ========================================
+        function previousModule() {
+            console.log('Navigate to previous module');
+            // Implementierung für Navigation zum vorherigen Modul
+        }
+
+        function nextModule() {
+            console.log('Navigate to next module');
+            // Implementierung für Navigation zum nächsten Modul
+        }
+
+        // ========================================
+        // Utility Functions
+        // ========================================
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: ${type === 'success' ? '#4facfe' : type === 'warning' ? '#f093fb' : '#74b9ff'};
+                color: white;
+                padding: 1rem 1.5rem;
+                border-radius: 8px;
+                z-index: 1000;
+                animation: slideIn 0.3s ease;
+            `;
+            notification.textContent = message;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.remove();
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
